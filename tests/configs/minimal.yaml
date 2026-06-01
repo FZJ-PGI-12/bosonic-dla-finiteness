@@ -1,0 +1,9 @@
+# Minimal valid configuration with 1 mode and 1 generator
+n_modes: 1
+omegas: [2.5]
+
+generators:
+  - kind: "+"
+    alpha: [1]
+    beta: [0]
+    label: "G_single"

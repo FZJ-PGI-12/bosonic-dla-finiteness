@@ -1,0 +1,62 @@
+[build-system]
+# This defines the tools needed to build the package
+requires = ["setuptools>=82.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bosonic-dla-finiteness"
+version = "0.1.0"
+description = "Implementation of the Dimensional Classification of Bosonic Hamiltonian Lie Algebras"
+readme = "README.md"
+requires-python = ">=3.12"
+authors = [
+    {name = "Tim Heib", email = "t.heib@fz-juelich.de"},
+    {name = "Lidia Westphal", email = "l.westphal@fz-juelich.de"},
+]
+keywords = ["quantum", "lie-algebra", "bosonic", "physics", "control-theory"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Topic :: Scientific/Engineering :: Physics",
+]
+
+# Core dependencies needed to RUN the program
+dependencies = [
+    "pydantic>=2.0",    # Data validation for YAML inputs
+    "pyyaml",        # Parsing the input files
+    "sympy",        # Symbolic math for Weyl algebra and commutators
+    "numpy",      # Efficient array handling for multi-indices
+]
+
+[project.optional-dependencies]
+# Dependencies needed for DEVELOPMENT and TESTING
+dev = [
+    "pytest",             # For running the test suite in /tests
+    "pytest-cov",         # For measuring test coverage
+    "black>=23.0",        # Code formatter
+    "mypy>=2.0",          # Static type checking to catch type errors early
+    "ruff>=0.14.0",       # Linter (replaces flake8/isort)
+    "pre-commit",         # Git hooks for automated formatting and linting
+]
+
+[tool.setuptools]
+# This tells setuptools to look into the 'src' folder for the package
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+# Configuration for the tools mentioned in dev-dependencies
+[tool.black]
+line-length = 79
+target-version = ['py39']
+
+[tool.ruff]
+line-length = 79
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+ignore = ["E501"]

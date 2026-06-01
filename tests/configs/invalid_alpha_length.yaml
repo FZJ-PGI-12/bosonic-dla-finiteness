@@ -1,0 +1,9 @@
+# Invalid: generator alpha length does not match n_modes
+n_modes: 2
+omegas: [1.0, 2.0]
+
+generators:
+  - kind: "+"
+    alpha: [1, 0, 0]  # Should have 2 elements, has 3
+    beta: [0, 1]
+    label: "G1"

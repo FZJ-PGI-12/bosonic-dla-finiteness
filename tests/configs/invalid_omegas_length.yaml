@@ -1,0 +1,9 @@
+# Invalid: omegas length does not match n_modes
+n_modes: 2
+omegas: [1.0]  # Should have 2 elements
+
+generators:
+  - kind: "+"
+    alpha: [1, 0]
+    beta: [0, 1]
+    label: "G1"

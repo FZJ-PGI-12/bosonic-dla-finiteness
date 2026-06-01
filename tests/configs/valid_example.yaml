@@ -1,0 +1,40 @@
+# Valid example configuration with 3 modes and 6 generators
+n_modes: 3
+omegas: [1.0, 2.0, 3.0]
+
+generators:
+  - kind: "+"
+    alpha: [1, 0, 0]
+    beta: [0, 1, 0]
+    description: "g_+(a†_0 a_1)"
+    label: "G1"
+
+  - kind: "-"
+    alpha: [1, 0, 0]
+    beta: [0, 1, 0]
+    description: "g_-(a†_0 a_1)"
+    label: "G2"
+
+  - kind: "+"
+    alpha: [0, 1, 0]
+    beta: [0, 0, 1]
+    description: "g_+(a†_1 a_2)"
+    label: "G3"
+
+  - kind: "-"
+    alpha: [0, 1, 0]
+    beta: [0, 0, 1]
+    description: "g_-(a†_1 a_2)"
+    label: "G4"
+
+  - kind: "+"
+    alpha: [1, 0, 0]
+    beta: [0, 1, 1]
+    description: "g_+(a†_0 a_1 a_2)"
+    label: "G5"
+
+  - kind: "-"
+    alpha: [1, 0, 0]
+    beta: [0, 1, 1]
+    description: "g_-(a†_0 a_1 a_2)"
+    label: "G6"
