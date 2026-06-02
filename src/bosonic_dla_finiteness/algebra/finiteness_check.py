@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 
 from bosonic_dla_finiteness.algebra.free_hamiltonian import (
@@ -41,8 +41,10 @@ class Cell:
     dot: DotColor = None
 
 
-# Row labels for the algorithm table
-Row = Subspace
+@dataclass
+class FinitenessResult:
+    dimension: DimensionResult
+    remaining_generators: set[BosonicGenerator] = field(default_factory=set)
 
 
 def _preprocess(F: list[FreeHamiltonian], generators: list[BosonicGenerator]):
@@ -73,7 +75,7 @@ def _preprocess(F: list[FreeHamiltonian], generators: list[BosonicGenerator]):
     return F_prime, decomposed
 
 
-def _process_Gperp_F(
+def _process_GperpF(
     table: dict[Subspace, list[Cell]],
     decomposed: dict[Subspace, set[BosonicGenerator]],
 ) -> DimensionResult:
@@ -165,11 +167,97 @@ def _process_G0(
     return DimensionResult.FINITE
 
 
-def mode_match(
+def _has_orange_green_conflict(
+    adj: list[list[int]],
+    table: dict[Subspace, list[Cell]],
+) -> bool:
+    n = len(adj)
+    dotted = [
+        j for j in range(n) if table[Subspace.G2_F][j].dot == DotColor.GREEN
+    ]
+    visited: set[int] = set()
+    for start in dotted:
+        if start in visited:
+            continue
+        has_orange = False
+        has_green = False
+        queue = [start]
+        while queue:
+            node = queue.pop()
+            if node in visited:
+                continue
+            visited.add(node)
+            bg = table[Subspace.G2_F][node].bg
+            has_orange |= bg == BgColor.ORANGE
+            has_green |= bg == BgColor.GREEN
+            if has_orange and has_green:
+                return True
+            for neighbor in range(n):
+                if adj[node][neighbor] and neighbor not in visited:
+                    queue.append(neighbor)
+    return False
+
+
+def _process_G2F(
+    table: dict[Subspace, list[Cell]],
+    decomposed: dict[Subspace, set[BosonicGenerator]],
+    adj: list[list[int]],
+) -> DimensionResult:
+    for gen in decomposed[Subspace.G2_F]:
+        p, q = s_neq(gen.gamma)
+        for j in (p, q):
+            if table[Subspace.G2_F][j].bg == BgColor.BLUE:
+                return DimensionResult.INFINITE
+            table[Subspace.G2_F][j].dot = DotColor.GREEN
+        adj[p][q] = 1
+        adj[q][p] = 1
+
+    if _has_orange_green_conflict(adj, table):
+        return DimensionResult.INFINITE
+    return DimensionResult.FINITE
+
+
+def _postprocess(
+    adj: list[list[int]],
+    table: dict[Subspace, list[Cell]],
+    decomposed: dict[Subspace, set[BosonicGenerator]],
+) -> FinitenessResult:
+    n = len(adj)
+
+    # BFS from all orange-background dotted nodes to find orange-reachable modes
+    orange_reachable: set[int] = set()
+    queue = [
+        j
+        for j in range(n)
+        if table[Subspace.G2_F][j].dot == DotColor.GREEN
+        and table[Subspace.G2_F][j].bg == BgColor.ORANGE
+    ]
+    while queue:
+        node = queue.pop()
+        if node in orange_reachable:
+            continue
+        orange_reachable.add(node)
+        for neighbor in range(n):
+            if adj[node][neighbor] and neighbor not in orange_reachable:
+                queue.append(neighbor)
+
+    orange_g2f = {
+        gen
+        for gen in decomposed[Subspace.G2_F]
+        if any(j in orange_reachable for j in s_neq(gen.gamma))
+    }
+
+    if orange_g2f:
+        remaining = orange_g2f | decomposed[Subspace.Gperp_F]
+        return FinitenessResult(DimensionResult.REMAINING, remaining)
+    return FinitenessResult(DimensionResult.FINITE)
+
+
+def check_finiteness(
     n: int,
     F: list[FreeHamiltonian],
     generators: list[BosonicGenerator],
-) -> DimensionResult:
+) -> FinitenessResult:
     F_prime, decomposed = _preprocess(F, generators)
     ROWS = [
         Subspace.G0,
@@ -184,20 +272,25 @@ def mode_match(
     table = {row: [Cell() for _ in range(n)] for row in ROWS}
 
     # Fill in the table entries corresponding to G^⊥_F generators.
-    intermediate_result = _process_Gperp_F(table, decomposed)
+    intermediate_result = _process_GperpF(table, decomposed)
     if intermediate_result == DimensionResult.INFINITE:
-        return DimensionResult.INFINITE
+        return FinitenessResult(DimensionResult.INFINITE)
 
     # Fill in the table entries corresponding to G^1, G^2_core, G^om, G^=F generators.
     intermediate_result = _process_G1_G2core_Gom_GeqF(table, decomposed)
     if intermediate_result == DimensionResult.INFINITE:
-        return DimensionResult.INFINITE
+        return FinitenessResult(DimensionResult.INFINITE)
 
     # Fill in the table entries corresponding to G^0 generators.
     intermediate_result = _process_G0(table, decomposed)
     if intermediate_result == DimensionResult.INFINITE:
-        return DimensionResult.INFINITE
+        return FinitenessResult(DimensionResult.INFINITE)
 
     # Fill in the table entries corresponding to G^2_F generators
     # and check for orange-green conflicts.
-    return DimensionResult.FINITE
+    adj = [[0] * n for _ in range(n)]
+    intermediate_result = _process_G2F(table, decomposed, adj)
+    if intermediate_result == DimensionResult.INFINITE:
+        return FinitenessResult(DimensionResult.INFINITE)
+
+    return _postprocess(adj, table, decomposed)
