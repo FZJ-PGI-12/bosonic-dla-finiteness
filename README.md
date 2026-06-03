@@ -66,6 +66,50 @@ result = check_finiteness(n=n, F=F, generators=generators)
 # result.remaining_generators: set of generators requiring further analysis (REMAINING only)
 ```
 
+### From a YAML config file
+
+```python
+from bosonic_dla_finiteness.io.loader import load_from_yaml
+from bosonic_dla_finiteness.algebra.finiteness_check import check_finiteness
+from bosonic_dla_finiteness.algebra.free_hamiltonian import FreeHamiltonian
+
+config = load_from_yaml("my_system.yaml")
+generators = [g.to_generator() for g in config.generators]
+result = check_finiteness(
+    n=config.n_modes,
+    F=[FreeHamiltonian(config.omegas)],
+    generators=generators,
+)
+```
+
+The YAML format uses `iotas` to specify generators compactly by mode indices:
+
+```yaml
+n_modes: 3
+omegas: [1.0, 2.0, 3.0]
+
+generators:
+  - kind: "+"
+    iotas:
+      alpha_indices: [0]
+    label: "G1"
+
+  - kind: "-"
+    iotas:
+      alpha_indices: [0]
+      alpha_exponents: [2]
+    label: "G2"
+
+  - kind: "+"
+    iotas:
+      alpha_indices: [0, 1]
+      alpha_exponents: [1, 1]
+      beta_indices: [0, 1]
+      beta_exponents: [1, 1]
+    label: "G3"
+    description: "optional human-readable description"
+```
+
 ### Constructing multi-indices
 
 ```python
