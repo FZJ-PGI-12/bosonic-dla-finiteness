@@ -23,4 +23,5 @@ test:
   stage: test
   script:
     - pip install -e ".[dev]"
-    - pytest --tb=short
+    - pytest --tb=short --cov=src --cov-report=term-missing
+  coverage: '/TOTAL.*\s+(\d+%)$/'

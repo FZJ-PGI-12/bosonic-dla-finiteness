@@ -1,3 +1,8 @@
+[![pipeline status](https://jugit.fz-juelich.de/pgi-12/projects/mathematical-physics/bosonic-dla-finiteness/badges/main/pipeline.svg)](https://jugit.fz-juelich.de/pgi-12/projects/mathematical-physics/bosonic-dla-finiteness/-/commits/main)
+[![coverage report](https://jugit.fz-juelich.de/pgi-12/projects/mathematical-physics/bosonic-dla-finiteness/badges/main/coverage.svg)](https://jugit.fz-juelich.de/pgi-12/projects/mathematical-physics/bosonic-dla-finiteness/-/commits/main)
+[![Latest Release](https://jugit.fz-juelich.de/pgi-12/projects/mathematical-physics/bosonic-dla-finiteness/-/badges/release.svg)](https://jugit.fz-juelich.de/pgi-12/projects/mathematical-physics/bosonic-dla-finiteness/-/releases)
+
+
 # bosonic-dla-finiteness
 
 A Python library for deciding whether the dynamical Lie algebra (DLA) of a bosonic quantum system is finite-dimensional.
