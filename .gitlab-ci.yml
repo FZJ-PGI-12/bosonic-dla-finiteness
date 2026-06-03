@@ -1,0 +1,26 @@
+default:
+  image: python:3.12
+
+stages:
+  - lint
+  - test
+
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+
+cache:
+  paths:
+    - .cache/pip
+
+lint:
+  stage: lint
+  script:
+    - pip install ruff
+    - ruff check src/ tests/
+    - ruff format --check src/ tests/
+
+test:
+  stage: test
+  script:
+    - pip install -e ".[dev]"
+    - pytest --tb=short
