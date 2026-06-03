@@ -45,7 +45,7 @@ $$g_+^{(\alpha,\beta)} = i\bigl(a^{(\beta,\alpha)} + a^{(\alpha,\beta)}\bigr), \
 ## Usage
 
 ```python
-from bosonic_dla_finiteness.algebra.dim_classifier import classify, DimensionResult
+from bosonic_dla_finiteness.algebra.finiteness_check import check_finiteness, DimensionResult
 from bosonic_dla_finiteness.algebra.free_hamiltonian import FreeHamiltonian
 from bosonic_dla_finiteness.operators.monomial import gamma_from_iotas, gamma_from_iotas_sum
 from bosonic_dla_finiteness.operators.operator import BosonicGenerator
@@ -61,8 +61,9 @@ generators = [
     BosonicGenerator(kind="+", gamma=gamma_from_iotas_sum(n=n, alpha_indices=[0, 1])),  # G2
 ]
 
-result = classify(n=n, F=F, generators=generators)
-# DimensionResult.FINITE | DimensionResult.INFINITE | DimensionResult.REMAINING
+result = check_finiteness(n=n, F=F, generators=generators)
+# result.dimension: DimensionResult.FINITE | .INFINITE | .REMAINING
+# result.remaining_generators: set of generators requiring further analysis (REMAINING only)
 ```
 
 ### Constructing multi-indices
@@ -82,24 +83,32 @@ gamma_from_iotas_sum(n=5, alpha_indices=[0, 2], beta_indices=[1])
 ```
 src/bosonic_dla_finiteness/
 ├── operators/
-│   ├── monomial.py       # GammaIndex type, index constructors, S0/S=/S≠ sets
-│   ├── operator.py       # BosonicGenerator (basis elements g_σ^γ)
-│   └── commutator.py     # Normal-ordered products and commutator coefficients
+│   ├── monomial.py       # GammaIndex type, index constructors, S=/S≠ sets
+│   └── operator.py       # BosonicGenerator (basis elements g_σ^γ)
 ├── algebra/
 │   ├── free_hamiltonian.py   # FreeHamiltonian, span reduction, χ_F map
 │   ├── subspaces.py          # Subspace enum, determine_subspace, decompose_generators
-│   └── dim_classifier.py     # Classification algorithm (classify / mode_match)
+│   └── finiteness_check.py   # Classification algorithm (check_finiteness)
 ├── io/
 │   ├── models.py         # Pydantic models for YAML input
 │   └── loader.py         # YAML loader
 └── constants.py          # Shared numerical tolerances
 ```
 
-## Running tests
+## Development
+
+Install with dev dependencies and activate pre-commit hooks:
+
+```bash
+pip install -e ".[dev]"
+pre-commit install
+```
+
+Run tests:
 
 ```bash
 pytest
-pytest --cov=bosonic_dla_finiteness   # with coverage
+pytest --cov=src --cov-report=term-missing   # with coverage
 ```
 
 ## Authors
