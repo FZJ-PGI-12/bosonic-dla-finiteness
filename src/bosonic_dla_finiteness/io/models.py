@@ -14,6 +14,45 @@ from pydantic import (
 )
 
 
+class IotasSpec(BaseModel):
+    """Compact generator spec using mode indices instead of full exponent vectors."""
+
+    alpha_indices: list[int] = Field(default_factory=list)
+    alpha_exponents: list[int] | None = None
+    beta_indices: list[int] = Field(default_factory=list)
+    beta_exponents: list[int] | None = None
+
+    @model_validator(mode="after")
+    def check_exponent_lengths(self) -> IotasSpec:
+        if self.alpha_exponents is not None and len(
+            self.alpha_exponents
+        ) != len(self.alpha_indices):
+            raise ValueError(
+                f"alpha_exponents (len={len(self.alpha_exponents)}) must match "
+                f"alpha_indices (len={len(self.alpha_indices)})."
+            )
+        if self.beta_exponents is not None and len(self.beta_exponents) != len(
+            self.beta_indices
+        ):
+            raise ValueError(
+                f"beta_exponents (len={len(self.beta_exponents)}) must match "
+                f"beta_indices (len={len(self.beta_indices)})."
+            )
+        return self
+
+    def to_alpha_beta(self, n: int) -> tuple[list[int], list[int]]:
+        """Expand to full exponent vectors of length n."""
+        alpha = [0] * n
+        beta = [0] * n
+        a_exps = self.alpha_exponents or [1] * len(self.alpha_indices)
+        b_exps = self.beta_exponents or [1] * len(self.beta_indices)
+        for idx, exp in zip(self.alpha_indices, a_exps):
+            alpha[idx] += exp
+        for idx, exp in zip(self.beta_indices, b_exps):
+            beta[idx] += exp
+        return alpha, beta
+
+
 class GeneratorKind(str, Enum):
     plus = "+"
     minus = "-"
@@ -28,26 +67,48 @@ class GeneratorSpec(BaseModel):
     kind  : "+" for g_+, "-" for g_-
     alpha : creation exponent vector  (a†_0)^alpha_0 ... (a†_n)^alpha_n
     beta  : annihilation exponent vector  (a_0)^beta_0 ... (a_n)^beta_n
+    iotas : compact alternative to alpha/beta using mode indices and exponents
     label : human-readable name for the generator (e.g. "G1", "G2", etc.)
-    description : optional longer description of the generator (e.g. "g_+(a†_0 a_1)")
+    description : optional longer description of the generator
     """
 
     kind: GeneratorKind
-    alpha: list[int] = Field(..., description="Creation exponents")
-    beta: list[int] = Field(..., description="Annihilation exponents")
+    alpha: list[int] | None = Field(None, description="Creation exponents")
+    beta: list[int] | None = Field(None, description="Annihilation exponents")
+    iotas: IotasSpec | None = Field(
+        None, description="Compact iota-based spec"
+    )
     label: str = Field(..., description="Short label for the generator")
     description: str | None = Field(
         None, description="Longer description of the generator"
     )
 
     @model_validator(mode="after")
-    def alpha_beta_same_length(self) -> GeneratorSpec:
-        if len(self.alpha) != len(self.beta):
+    def check_alpha_beta_or_iotas(self) -> GeneratorSpec:
+        has_explicit = self.alpha is not None and self.beta is not None
+        has_iotas = self.iotas is not None
+        if not has_explicit and not has_iotas:
+            raise ValueError("Specify either 'alpha'/'beta' or 'iotas'.")
+        if has_explicit and has_iotas:
+            raise ValueError(
+                "Specify either 'alpha'/'beta' or 'iotas', not both."
+            )
+        if has_explicit and len(self.alpha) != len(self.beta):
             raise ValueError(
                 f"alpha (len={len(self.alpha)}) and beta (len={len(self.beta)}) "
                 f"must have the same length."
             )
         return self
+
+    def expand(self, n: int) -> None:
+        """Expand iotas to alpha/beta of length n and validate dimensions."""
+        if self.iotas is not None:
+            self.alpha, self.beta = self.iotas.to_alpha_beta(n)
+        for vec, name in [(self.alpha, "alpha"), (self.beta, "beta")]:
+            if len(vec) != n:
+                raise ValueError(
+                    f"{name} has length {len(vec)} but expected n={n}."
+                )
 
     @property
     def gamma(self) -> tuple[tuple[int, ...], tuple[int, ...]]:
@@ -68,15 +129,11 @@ class GeneratorSpec(BaseModel):
 
 class SystemConfig(BaseModel):
     """
-    The root configuration for the Hamiltonian system.
-    """
-
-    """
-    Top-level input model for a fermionic DLA computation.
+    Top-level input model for a bosonic DLA computation.
 
     Fields
     ------
-    n_modes    : number of fermionic modes n
+    n_modes    : number of bosonic modes n
     omegas     : drift frequencies [omega_0, ..., omega_{n-1}]
     generators : list of g_+/g_- generator specifications
 
@@ -85,6 +142,7 @@ class SystemConfig(BaseModel):
     - len(omegas) must equal n_modes
     - len(alpha) and len(beta) must equal n_modes for every generator
     """
+
     n_modes: Annotated[int, Field(ge=1)]
     omegas: list[float]
     generators: list[GeneratorSpec]
@@ -99,27 +157,23 @@ class SystemConfig(BaseModel):
 
     @model_validator(mode="after")
     def validate_dimensions(self) -> SystemConfig:
-        if len(self.omegas) != self.n_modes:
+        n = self.n_modes
+
+        if len(self.omegas) != n:
             raise ValueError(
-                f"Length of omegas ({len(self.omegas)}) must equal n_modes ({self.n_modes})."
+                f"Length of omegas ({len(self.omegas)}) must equal n_modes ({n})."
             )
 
-        # alpha / beta length for every generator
-        for i, g in enumerate(self.generators):
-            for vec, name in [(g.alpha, "alpha"), (g.beta, "beta")]:
-                if len(vec) != self.n_modes:
-                    raise ValueError(
-                        f"generators[{i}].{name} has length {len(vec)} "
-                        f"but n_modes={self.n_modes}."
-                    )
+        for g in self.generators:
+            g.expand(n)
 
         # free_hamiltonians: each vector must have length n_modes
         if self.free_hamiltonians is not None:
             for i, x in enumerate(self.free_hamiltonians):
-                if len(x) != self.n_modes:
+                if len(x) != n:
                     raise ValueError(
                         f"free_hamiltonians[{i}] has length {len(x)} "
-                        f"but n_modes={self.n_modes}."
+                        f"but n_modes={n}."
                     )
 
         return self

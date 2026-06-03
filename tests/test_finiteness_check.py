@@ -6,6 +6,10 @@ decomposed-generator mapping so that the helper functions can be exercised
 in isolation, independent of subspace-classification or chi_F logic.
 """
 
+from pathlib import Path
+
+import pytest
+
 from bosonic_dla_finiteness.algebra.finiteness_check import (
     BgColor,
     Cell,
@@ -18,6 +22,7 @@ from bosonic_dla_finiteness.algebra.finiteness_check import (
 )
 from bosonic_dla_finiteness.algebra.free_hamiltonian import FreeHamiltonian
 from bosonic_dla_finiteness.algebra.subspaces import Subspace
+from bosonic_dla_finiteness.io.loader import load_from_yaml
 from bosonic_dla_finiteness.operators.monomial import (
     gamma_from_iotas,
     gamma_from_iotas_sum,
@@ -353,8 +358,24 @@ class TestHasOrangeGreenConflict:
 
 
 class TestFinitenessCheck:
-    def test_finiteness_check(self):
-        fh = FreeHamiltonian([i for i in range(1, 13)])
+    @pytest.fixture
+    def configs_dir(self):
+        """Path to the test configs directory."""
+        return Path(__file__).parent / "configs/finiteness"
+
+    @pytest.fixture
+    def finite_example_path(self, configs_dir):
+        """Path to the finite example YAML config."""
+        return configs_dir / "finite_example.yaml"
+
+    @pytest.fixture
+    def free_hamiltonians(self):
+        """List of free Hamiltonians for testing."""
+        return [FreeHamiltonian([i for i in range(1, 13)])]
+
+    @pytest.fixture
+    def generators(self):
+        """List of generators for testing."""
         # g1: g_+(a†_10)         = i(a†_10 + a_10)                             — G1, linear on mode 0
         g1 = BosonicGenerator(
             kind="+", gamma=gamma_from_iotas(n=12, alpha_idx=10)
@@ -446,8 +467,23 @@ class TestFinitenessCheck:
             ),
         )
         assert g11
-
         generators = [g1, g2, g3, g4, g5, g6, g7, g8, g9, g10, g11]
-        result = check_finiteness(n=12, F=[fh], generators=generators)
+        return generators
+
+    def test_finiteness_check_with_generators(
+        self, free_hamiltonians, generators
+    ):
+        result = check_finiteness(
+            n=12, F=free_hamiltonians, generators=generators
+        )
         assert result.dimension == DimensionResult.FINITE
-        pass
+
+    def test_finiteness_check_with_config(self, finite_example_path):
+        config = load_from_yaml(finite_example_path)
+        generators = [gen.to_generator() for gen in config.generators]
+        result = check_finiteness(
+            n=config.n_modes,
+            F=[FreeHamiltonian(config.omegas)],
+            generators=generators,
+        )
+        assert result.dimension == DimensionResult.FINITE

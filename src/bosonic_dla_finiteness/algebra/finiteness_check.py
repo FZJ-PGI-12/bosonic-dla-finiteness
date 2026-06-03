@@ -47,10 +47,10 @@ class FinitenessResult:
     remaining_generators: set[BosonicGenerator] = field(default_factory=set)
 
 
-def _preprocess(F: list[FreeHamiltonian], generators: list[BosonicGenerator]):
-    F_prime = compute_F_prime(F)
-    decomposed = decompose_generators(generators)
-
+def _preprocess(
+    F_prime: list[FreeHamiltonian],
+    decomposed: dict[Subspace, set[BosonicGenerator]],
+) -> DimensionResult:
     # A generator in G^⊥ with nonzero χ_F(γ) witnesses an infinite-dimensional DLA
     for gen in decomposed[Subspace.Gperp]:
         chiF = compute_chi_F_gamma(F_prime, gen.gamma)
@@ -72,7 +72,7 @@ def _preprocess(F: list[FreeHamiltonian], generators: list[BosonicGenerator]):
     decomposed[Subspace.G2_F] = commuting
     decomposed[Subspace.G2_core] = uncommuting
 
-    return F_prime, decomposed
+    return DimensionResult.FINITE
 
 
 def _process_GperpF(
@@ -284,7 +284,10 @@ def check_finiteness(
                                   background and all G^⊥_F generators that
                                   require further analysis.
     """
-    F_prime, decomposed = _preprocess(F, generators)
+    F_prime = compute_F_prime(F)
+    decomposed = decompose_generators(generators)
+    intermediate_result = _preprocess(F_prime, decomposed)
+
     ROWS = [
         Subspace.G0,
         Subspace.G1,
