@@ -357,17 +357,39 @@ class TestHasOrangeGreenConflict:
         assert _has_orange_green_conflict(adj, table)
 
 
+_CONFIGS_DIR = Path(__file__).parent / "configs/finiteness"
+_EXPECTED = {
+    "finite": DimensionResult.FINITE,
+    "infinite": DimensionResult.INFINITE,
+    "remaining": DimensionResult.REMAINING,
+}
+
+
+def _collect_cases():
+    return [
+        pytest.param(
+            path,
+            _EXPECTED[path.parent.name],
+            id=f"{path.parent.name}/{path.stem}",
+        )
+        for path in sorted(_CONFIGS_DIR.rglob("*.yaml"))
+        if path.parent.name in _EXPECTED
+    ]
+
+
+@pytest.mark.parametrize("yaml_path,expected", _collect_cases())
+def test_finiteness_from_yaml(yaml_path, expected):
+    config = load_from_yaml(yaml_path)
+    generators = [g.to_generator() for g in config.generators]
+    result = check_finiteness(
+        n=config.n_modes,
+        F=[FreeHamiltonian(config.omegas)],
+        generators=generators,
+    )
+    assert result.dimension == expected
+
+
 class TestFinitenessCheck:
-    @pytest.fixture
-    def configs_dir(self):
-        """Path to the test configs directory."""
-        return Path(__file__).parent / "configs/finiteness"
-
-    @pytest.fixture
-    def finite_example_path(self, configs_dir):
-        """Path to the finite example YAML config."""
-        return configs_dir / "finite_example.yaml"
-
     @pytest.fixture
     def free_hamiltonians(self):
         """List of free Hamiltonians for testing."""
@@ -475,15 +497,5 @@ class TestFinitenessCheck:
     ):
         result = check_finiteness(
             n=12, F=free_hamiltonians, generators=generators
-        )
-        assert result.dimension == DimensionResult.FINITE
-
-    def test_finiteness_check_with_config(self, finite_example_path):
-        config = load_from_yaml(finite_example_path)
-        generators = [gen.to_generator() for gen in config.generators]
-        result = check_finiteness(
-            n=config.n_modes,
-            F=[FreeHamiltonian(config.omegas)],
-            generators=generators,
         )
         assert result.dimension == DimensionResult.FINITE
