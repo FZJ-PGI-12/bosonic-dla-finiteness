@@ -2,53 +2,73 @@
 # Bosonic Lie algebra input file
 #
 # n_modes : number of bosonic modes
-# omegas  : drift frequencies omega_0 ... omega_{n-1}
-# generators: list of g_+/g_- defined by (alpha, beta) multi-indices
-#   kind  : "+" or "-"
-#   alpha : creation exponents     (a†_0)^alpha_0 ... (a†_n)^alpha_n
-#   beta  : annihilation exponents  (a_0)^beta_0  ... (a_n)^beta_n
-#   label : optional name (recommended for readability)
-#   coeff : optional coefficient (default 1.0)
+# omegas  : drift frequencies [omega_0, ..., omega_{n-1}]
+#
+# generators: list of g_+/g_- operators, specified in one of two ways:
+#
+#   Option A — explicit exponent vectors (length must equal n_modes):
+#     kind  : "+" or "-"
+#     alpha : creation exponents   [(a†_0)^alpha_0, ..., (a†_n)^alpha_n]
+#     beta  : annihilation exponents [(a_0)^beta_0,  ..., (a_n)^beta_n]
+#
+#   Option B — compact iotas notation (recommended):
+#     kind  : "+" or "-"
+#     iotas :
+#       alpha_indices    : mode indices with nonzero creation exponent
+#       alpha_exponents  : exponents for each alpha index (default: 1)
+#       beta_indices     : mode indices with nonzero annihilation exponent
+#       beta_exponents   : exponents for each beta index (default: 1)
+#
+#   Both options accept:
+#     label       : short name for the generator (required)
+#     description : longer description (optional)
 
 n_modes: 3
 omegas: [1.0, 2.0, 3.0]
 
 generators:
 
-  # ── Degree 2: hopping terms ──────────────────────────────────────────────
-  - kind:  "+"
-    alpha: [1, 0, 0]   # a†_0
-    beta:  [0, 1, 0]   # a_1
-    description: "g_+(a†_0 a_1)"
-    label: "G1"
+  # ── Option A: explicit alpha/beta vectors ────────────────────────────────
 
-  - kind:  "-"
+  - kind: "+"
     alpha: [1, 0, 0]
     beta:  [0, 1, 0]
-    description: "g_-(a†_0 a_1)"
-    label: "G2"
+    label: "G1"
+    description: "g_+(a†_0 a_1)"
 
-  - kind:  "+"
-    alpha: [0, 1, 0]   # a†_1
-    beta:  [0, 0, 1]   # a_2
-    description: "g_+(a†_1 a_2)"
-    label: "G3"
-
-  - kind:  "-"
-    alpha: [0, 1, 0]
-    beta:  [0, 0, 1]
-    description: "g_-(a†_1 a_2)"
-    label: "G4"
-
-  # ── Degree 3: three-body terms ───────────────────────────────────────────
-  - kind:  "+"
-    alpha: [1, 0, 0]   # a†_0
-    beta:  [0, 1, 1]   # a_1 a_2
-    description: "g_+(a†_0 a_1 a_2)"
-    label: "G5"
-
-  - kind:  "-"
+  - kind: "-"
     alpha: [1, 0, 0]
-    beta:  [0, 1, 1]
-    description: "g_-(a†_0 a_1 a_2)"
+    beta:  [0, 1, 0]
+    label: "G2"
+    description: "g_-(a†_0 a_1)"
+
+  # ── Option B: compact iotas notation ────────────────────────────────────
+
+  - kind: "+"
+    iotas:
+      alpha_indices: [1]
+      beta_indices:  [2]
+    label: "G3"
+    description: "g_+(a†_1 a_2)"
+
+  - kind: "-"
+    iotas:
+      alpha_indices: [1]
+      beta_indices:  [2]
+    label: "G4"
+    description: "g_-(a†_1 a_2)"
+
+  - kind: "+"
+    iotas:
+      alpha_indices: [0]
+      beta_indices:  [1, 2]
+    label: "G5"
+    description: "g_+(a†_0 a_1 a_2)"
+
+  - kind: "-"
+    iotas:
+      alpha_indices:   [0]
+      alpha_exponents: [2]
+      beta_indices:    [1, 2]
     label: "G6"
+    description: "g_-((a†_0)^2 a_1 a_2)"

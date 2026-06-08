@@ -39,6 +39,9 @@ dev = [
     "pre-commit",         # Git hooks for automated formatting and linting
 ]
 
+[project.scripts]
+bosonic-dla = "bosonic_dla_finiteness.__main__:main"
+
 [tool.setuptools]
 # This tells setuptools to look into the 'src' folder for the package
 package-dir = {"" = "src"}
