@@ -40,12 +40,16 @@ class DotColor(Enum):
 
 @dataclass
 class Cell:
+    """One entry in the classification table: a background color and an optional dot."""
+
     bg: BgColor = None
     dot: DotColor = None
 
 
 @dataclass
 class FinitenessResult:
+    """Return value of check_finiteness."""
+
     dimension: DimensionResult
     remaining_generators: set[BosonicGenerator] = field(default_factory=set)
 

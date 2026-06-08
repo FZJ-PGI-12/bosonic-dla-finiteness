@@ -29,8 +29,7 @@ def _is_canonical(alpha: MultiIndex, beta: MultiIndex) -> bool:
     Selects one canonical representative from each adjoint pair {(α,β), (β,α)}.
     Diagonal elements (α=β) are their own canonical representatives.
 
-    NOTE: this uses lexicographic order on the concatenated 2n-tuple, NOT
-    component-wise comparison. Needs confirmation from user for off-diagonal terms.
+    Uses lexicographic order on the concatenated 2n-tuple (α‖β), not component-wise.
     """
     return alpha + beta >= beta + alpha
 

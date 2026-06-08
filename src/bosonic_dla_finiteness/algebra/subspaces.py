@@ -10,7 +10,6 @@ G^=   — diagonal (α=β), degree≥4
 G^om  — degree≥3, unique mode k with α_k+β_k=1, all other modes diagonal
           ("om" stands for optomechanics)
 G^⊥   — orthogonal complement of G^core = G^0⊕G^1⊕G^2⊕G^=⊕G^om
-G^⊥   — orthogonal complement of G^core = G^0⊕G^1⊕G^2⊕G^=⊕G^om
 
 Because the basis {g_σ^γ} is orthogonal under the scalar product ⟨·|·⟩, classification
 is per basis element and decomposition is a single-pass partition of the generator list.
@@ -37,7 +36,7 @@ class Subspace(Enum):
 
 
 def determine_subspace(gen: BosonicGenerator) -> Subspace:
-    """Classify a single BosonicGenerator into one of the six subspaces."""
+    """Classify a BosonicGenerator into one of G0, G1, G2, G=, Gom, or G⊥."""
     alpha, beta = gen.alpha, gen.beta
     n = gen.n
     deg = gen.degree
