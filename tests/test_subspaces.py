@@ -3,7 +3,7 @@ from bosonic_dla_finiteness.algebra.subspaces import (
     decompose_generators,
     determine_subspace,
 )
-from bosonic_dla_finiteness.operators.monomial import tau, zero_gamma
+from bosonic_dla_finiteness.operators.monomial import tau
 from bosonic_dla_finiteness.operators.operator import BosonicGenerator
 
 
@@ -18,7 +18,7 @@ def gm(gamma):
 class TestClassify:
     def test_G0_constant(self):
         # degree 0: constant 2i = g_+^{0}
-        assert determine_subspace(gp(zero_gamma(2))) == Subspace.G0
+        assert determine_subspace(gp(((0, 0), (0, 0)))) == Subspace.G0
 
     def test_G0_number_operator_mode0(self):
         assert determine_subspace(gp(tau(0, 2))) == Subspace.G0
@@ -68,7 +68,7 @@ class TestClassify:
 class TestDecomposeGenerators:
     def _all_generators(self):
         return [
-            gp(zero_gamma(2)),  # G0
+            gp(((0, 0), (0, 0))),  # G0
             gp(tau(0, 2)),  # G0
             gp(((1, 0), (0, 0))),  # G1
             gm(((1, 0), (0, 0))),  # G1

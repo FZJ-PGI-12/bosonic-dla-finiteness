@@ -137,15 +137,6 @@ def gamma_from_iotas_sum(
     return (alpha, beta)
 
 
-def zero_gamma(n: int) -> GammaIndex:
-    """
-    The zero multi-index in N^{2n}.
-    Corresponds to the identity monomial a^0 = 1.
-    """
-    z = tuple([0] * n)
-    return (z, z)
-
-
 def s_eq(gamma: GammaIndex) -> frozenset[int]:
     """S=(γ) = {k : α_k = β_k ≠ 0} — modes where the generator acts diagonally."""
     alpha, beta = gamma

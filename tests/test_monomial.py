@@ -6,7 +6,6 @@ from bosonic_dla_finiteness.operators.monomial import (
     gamma_degree,
     iota,
     tau,
-    zero_gamma,
 )
 
 # ── Tests for iota ────────────────────────────────────────────────────────────
@@ -64,27 +63,6 @@ class TestTau:
             assert beta == iota(p, 4)
 
 
-# ── Tests for zero_gamma ──────────────────────────────────────────────────────
-
-
-class TestZeroGamma:
-    """Tests for zero_gamma function."""
-
-    def test_zero_gamma_basic(self):
-        """Test zero_gamma construction."""
-        assert zero_gamma(3) == ((0, 0, 0), (0, 0, 0))
-
-    def test_zero_gamma_single(self):
-        """Test zero_gamma with n=1."""
-        assert zero_gamma(1) == ((0,), (0,))
-
-    def test_zero_gamma_length(self):
-        """Test that zero_gamma has correct dimensions."""
-        alpha, beta = zero_gamma(5)
-        assert len(alpha) == 5
-        assert len(beta) == 5
-
-
 # ── Tests for gamma_degree ────────────────────────────────────────────────────
 
 
@@ -103,7 +81,7 @@ class TestGammaDegree:
 
     def test_gamma_degree_identity(self):
         """Test degree of identity monomial."""
-        assert gamma_degree(zero_gamma(5)) == 0
+        assert gamma_degree(((0, 0, 0, 0, 0), (0, 0, 0, 0, 0))) == 0
 
     def test_gamma_degree_tau(self):
         """Test degree of tau monomial."""
