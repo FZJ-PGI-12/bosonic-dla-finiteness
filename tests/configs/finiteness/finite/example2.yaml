@@ -86,7 +86,7 @@ generators:
   - kind: "+"
     iotas:
       alpha_indices: [3]
-      alpha_exponents: [3]
+      beta_indices: [3]
     description: "g_+(a†_3^3 a_3^3)"
     label: "G12"
 

@@ -1,4 +1,5 @@
 import argparse
+import logging
 import sys
 
 from bosonic_dla_finiteness.algebra.finiteness_check import (
@@ -16,7 +17,18 @@ def main() -> None:
     parser.add_argument(
         "config", help="Path to the YAML system configuration file."
     )
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        action="store_true",
+        help="Enable verbose logging.",
+    )
     args = parser.parse_args()
+
+    logging.basicConfig(
+        level=logging.DEBUG if args.verbose else logging.WARNING,
+        format="%(levelname)s %(name)s: %(message)s",
+    )
 
     try:
         config = load_from_yaml(args.config)

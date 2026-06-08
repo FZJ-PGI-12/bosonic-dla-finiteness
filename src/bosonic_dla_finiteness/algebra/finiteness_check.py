@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, field
 from enum import Enum
 
@@ -15,6 +16,8 @@ from bosonic_dla_finiteness.algebra.subspaces import (
 from bosonic_dla_finiteness.constants import ZERO_TOL
 from bosonic_dla_finiteness.operators.monomial import s_eq, s_neq
 from bosonic_dla_finiteness.operators.operator import BosonicGenerator
+
+log = logging.getLogger(__name__)
 
 
 class DimensionResult(Enum):
@@ -47,7 +50,7 @@ class FinitenessResult:
     remaining_generators: set[BosonicGenerator] = field(default_factory=set)
 
 
-def _preprocess(
+def _preprocess_Gperp_G2(
     F_prime: list[FreeHamiltonian],
     decomposed: dict[Subspace, set[BosonicGenerator]],
 ) -> DimensionResult:
@@ -72,6 +75,13 @@ def _preprocess(
     decomposed[Subspace.G2_F] = commuting
     decomposed[Subspace.G2_core] = uncommuting
 
+    log.debug(
+        "Subspace sizes: G2_F=%d, G2_core=%d, Gperp_F=%d, Geq_F=%d",
+        len(decomposed[Subspace.G2_F]),
+        len(decomposed[Subspace.G2_core]),
+        len(decomposed[Subspace.Gperp_F]),
+        len(decomposed[Subspace.Geq_F]),
+    )
     return DimensionResult.FINITE
 
 
@@ -284,9 +294,20 @@ def check_finiteness(
                                   background and all G^⊥_F generators that
                                   require further analysis.
     """
+    log.info(
+        "Starting finiteness check: n=%d, |generators|=%d", n, len(generators)
+    )
+    log.debug("Computing F' from F")
     F_prime = compute_F_prime(F)
+    log.debug("Decomposing generators into subspaces")
     decomposed = decompose_generators(generators)
-    intermediate_result = _preprocess(F_prime, decomposed)
+    log.debug("Preprocessing G^⊥ and G^2 generators")
+    intermediate_result = _preprocess_Gperp_G2(F_prime, decomposed)
+    if intermediate_result == DimensionResult.INFINITE:
+        log.info(
+            "INFINITE: G^⊥ generator with nonzero χ_F detected in preprocessing"
+        )
+        return FinitenessResult(DimensionResult.INFINITE)
 
     ROWS = [
         Subspace.G0,
@@ -300,21 +321,33 @@ def check_finiteness(
 
     table = {row: [Cell() for _ in range(n)] for row in ROWS}
 
+    log.debug("Processing G^⊥_F generators")
     intermediate_result = _process_GperpF(table, decomposed)
     if intermediate_result == DimensionResult.INFINITE:
+        log.info("INFINITE: detected in G^⊥_F step")
         return FinitenessResult(DimensionResult.INFINITE)
 
+    log.debug("Processing G^1, G^2_core, G^om, G^=_F generators")
     intermediate_result = _process_G1_G2core_Gom_GeqF(table, decomposed)
     if intermediate_result == DimensionResult.INFINITE:
+        log.info("INFINITE: detected in G^1/G^2_core/G^om/G^=_F step")
         return FinitenessResult(DimensionResult.INFINITE)
 
+    log.debug("Processing G^0 generators")
     intermediate_result = _process_G0(table, decomposed)
     if intermediate_result == DimensionResult.INFINITE:
+        log.info("INFINITE: detected in G^0 step")
         return FinitenessResult(DimensionResult.INFINITE)
 
+    log.debug("Processing G^2_F generators")
     adj = [[0] * n for _ in range(n)]
     intermediate_result = _process_G2F(table, decomposed, adj)
     if intermediate_result == DimensionResult.INFINITE:
+        log.info("INFINITE: detected in G^2_F step")
         return FinitenessResult(DimensionResult.INFINITE)
 
-    return _postprocess(adj, table, decomposed)
+    result = _postprocess(adj, table, decomposed)
+    log.info("Result: %s", result.dimension.value)
+    if result.dimension == DimensionResult.REMAINING:
+        log.info("Remaining generators: %d", len(result.remaining_generators))
+    return result
