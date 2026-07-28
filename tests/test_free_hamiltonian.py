@@ -83,16 +83,19 @@ class TestSystemConfigGetF:
         defaults.update(kwargs)
         return SystemConfig(**defaults)
 
-    def test_default_F_is_omegas(self):
+    def test_single_vector_is_wrapped(self):
         config = self._base_config()
         assert config.get_F() == [[1.0, 2.0]]
 
-    def test_explicit_F(self):
-        config = self._base_config(free_hamiltonians=[[1.0, 0.0], [0.0, 1.0]])
+    def test_list_of_vectors_passed_through(self):
+        config = self._base_config(omegas=[[1.0, 0.0], [0.0, 1.0]])
         assert config.get_F() == [[1.0, 0.0], [0.0, 1.0]]
 
     def test_validation_wrong_length(self):
         with pytest.raises(Exception):
-            self._base_config(
-                free_hamiltonians=[[1.0, 0.0, 0.0]]
-            )  # length 3 ≠ n_modes=2
+            self._base_config(omegas=[1.0, 0.0, 0.0])  # length 3 ≠ n_modes=2
+
+    def test_validation_wrong_length_in_list_form(self):
+        with pytest.raises(Exception):
+            # Two vectors is fine; the second having length 3 is not.
+            self._base_config(omegas=[[1.0, 0.0], [0.0, 1.0, 0.0]])

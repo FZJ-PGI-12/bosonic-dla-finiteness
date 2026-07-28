@@ -1,0 +1,45 @@
+n_modes: 4
+omegas: [[1.0, 1.0, 1.0, 1.0], [3.0, 1.0, 1.0, 2.0], [2.0, 1.0, 1.0, 3.0]]
+
+generators:
+
+  - kind:  "+"
+    iotas: 
+      alpha_indices: [0, 3]
+      beta_indices: [3]
+    description: "g_+(a†_0 a†_3 a_3)"
+    label: "G1"
+
+  - kind:  "-"
+    iotas: 
+      alpha_indices: [0]
+      alpha_exponents: [2]
+    description: "g_-(a†_0^2)"
+    label: "G2"
+
+  - kind:  "-"
+    iotas: 
+      alpha_indices: [0]
+    description: "g_-(a†_0)"
+    label: "G3"
+  
+  - kind: "+"
+    iotas: 
+      alpha_indices: [3]
+      beta_indices: [3]
+    description: "g_+(a†_3 a_3)"
+    label: "G4"
+
+  - kind: "+"
+    iotas: 
+      alpha_indices: [1]
+      beta_indices: [2]
+    description: "g_+(a†_1 a_2)"
+    label: "G5"
+
+  - kind: "+"
+    iotas: 
+      alpha_indices: [1, 3]
+      beta_indices: [2, 3]
+    description: "g_+(a†_1 a†_3 a_2 a_3)"
+    label: "G6"

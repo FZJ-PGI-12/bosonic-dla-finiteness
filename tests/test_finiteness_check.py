@@ -383,7 +383,7 @@ def test_finiteness_from_yaml(yaml_path, expected):
     generators = [g.to_generator() for g in config.generators]
     result = check_finiteness(
         n=config.n_modes,
-        F=[FreeHamiltonian(config.omegas)],
+        F=[FreeHamiltonian(x) for x in config.get_F()],
         generators=generators,
     )
     assert result.dimension == expected

@@ -2,7 +2,12 @@
 # Bosonic Lie algebra input file
 #
 # n_modes : number of bosonic modes
-# omegas  : drift frequencies [omega_0, ..., omega_{n-1}]
+# omegas  : the set F of free Hamiltonians. Either a single vector of drift
+#           frequencies [omega_0, ..., omega_{n-1}], or a list of such vectors
+#           for several free Hamiltonians:
+#             omegas:
+#               - [1.0, 1.0, 1.0]
+#               - [2.0, 1.0, 1.0]
 #
 # generators: list of g_+/g_- operators, specified in one of two ways:
 #

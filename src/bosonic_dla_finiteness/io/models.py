@@ -134,57 +134,52 @@ class SystemConfig(BaseModel):
     Fields
     ------
     n_modes    : number of bosonic modes n
-    omegas     : drift frequencies [omega_0, ..., omega_{n-1}]
+    omegas     : the set F of free Hamiltonians, either one drift-frequency
+                 vector [omega_0, ..., omega_{n-1}] or a list of such vectors
     generators : list of g_+/g_- generator specifications
 
     Cross-field validation
     ----------------------
-    - len(omegas) must equal n_modes
+    - every vector in omegas must have length n_modes
     - len(alpha) and len(beta) must equal n_modes for every generator
     """
 
     n_modes: Annotated[int, Field(ge=1)]
-    omegas: list[float]
-    generators: list[GeneratorSpec]
-    free_hamiltonians: list[list[float]] | None = Field(
-        None,
+    omegas: list[float] | list[list[float]] = Field(
+        ...,
         description=(
-            "Set F of free Hamiltonians X^(ℓ) = Σ_k x_k^(ℓ) (i a†_k a_k). "
-            "Each entry is a coefficient vector of length n_modes. "
-            "Defaults to [omegas] if omitted."
+            "Set F of free Hamiltonians X^(ℓ) = Σ_k ω_k^(ℓ) (i a†_k a_k). "
+            "Either a single coefficient vector of length n_modes, or a list "
+            "of such vectors for several free Hamiltonians."
         ),
     )
+    generators: list[GeneratorSpec]
 
     @model_validator(mode="after")
     def validate_dimensions(self) -> SystemConfig:
         n = self.n_modes
 
-        if len(self.omegas) != n:
-            raise ValueError(
-                f"Length of omegas ({len(self.omegas)}) must equal n_modes ({n})."
-            )
+        for i, x in enumerate(self.get_F()):
+            if len(x) != n:
+                raise ValueError(
+                    f"omegas[{i}] has length {len(x)} but n_modes={n}."
+                )
 
         for g in self.generators:
             g.expand(n)
 
-        # free_hamiltonians: each vector must have length n_modes
-        if self.free_hamiltonians is not None:
-            for i, x in enumerate(self.free_hamiltonians):
-                if len(x) != n:
-                    raise ValueError(
-                        f"free_hamiltonians[{i}] has length {len(x)} "
-                        f"but n_modes={n}."
-                    )
-
         return self
 
     def get_F(self) -> list[list[float]]:
-        """Return the set F of free Hamiltonian coefficient vectors (defaults to [omegas])."""
-        return (
-            self.free_hamiltonians
-            if self.free_hamiltonians is not None
-            else [self.omegas]
-        )
+        """
+        Return the set F as a list of coefficient vectors.
+
+        Normalizes the single-vector spelling of `omegas` to [omegas], so
+        callers never have to distinguish the two input shapes.
+        """
+        if self.omegas and isinstance(self.omegas[0], list):
+            return self.omegas
+        return [self.omegas]
 
     @field_validator("generators")
     @classmethod

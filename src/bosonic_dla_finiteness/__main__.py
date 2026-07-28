@@ -39,7 +39,7 @@ def main() -> None:
     generators = [g.to_generator() for g in config.generators]
     result = check_finiteness(
         n=config.n_modes,
-        F=[FreeHamiltonian(config.omegas)],
+        F=[FreeHamiltonian(x) for x in config.get_F()],
         generators=generators,
     )
 
