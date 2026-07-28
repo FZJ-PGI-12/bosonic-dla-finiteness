@@ -1,22 +1,23 @@
 [build-system]
 # This defines the tools needed to build the package
-requires = ["setuptools>=82.0", "wheel"]
+requires = ["setuptools>=82.0", "setuptools-scm>=8", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "bosonic-dla-finiteness"
-version = "0.1.0"
+dynamic = ["version"]   # derived from the latest git tag by setuptools-scm
 description = "Implementation of the Dimensional Classification of Bosonic Hamiltonian Lie Algebras"
 readme = "README.md"
 requires-python = ">=3.12"
+license = "MIT"
+license-files = ["LICENSE"]
 authors = [
-    {name = "Tim Heib", email = "t.heib@fz-juelich.de"},
-    {name = "Lidia Westphal", email = "l.westphal@fz-juelich.de"},
+    {name = "Tim Heib"},
+    {name = "Lidia Westphal"},
 ]
 keywords = ["quantum", "lie-algebra", "bosonic", "physics", "control-theory"]
 classifiers = [
     "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: MIT License",
     "Topic :: Scientific/Engineering :: Physics",
 ]
 
@@ -48,6 +49,10 @@ package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools_scm]
+# Presence of this section enables setuptools-scm. The version comes from the
+# latest git tag (e.g. v0.1.0); untagged commits get a .devN+g<hash> suffix.
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
