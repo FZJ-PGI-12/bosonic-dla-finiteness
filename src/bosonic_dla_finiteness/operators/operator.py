@@ -2,7 +2,10 @@
 BosonicGenerator: a single basis element g_σ^γ of the skew-Hermitian Weyl algebra Â_n.
 
 No coefficient is stored — this object is a label for the basis element.
-Coefficients belong to the drift Hamiltonian (the omegas vector).
+Rescaling a generator does not change the Lie algebra it generates, so the
+classification depends only on which basis elements are present, not on their
+prefactors. (The omegas vector holds free-Hamiltonian coefficients, which are
+a separate quantity: there the values do matter, via chi_F.)
 
 Basis elements:
     g_+^(α,β) = i(a^(β,α) + a^(α,β))   for (α,β) ≥ (β,α) lexicographically

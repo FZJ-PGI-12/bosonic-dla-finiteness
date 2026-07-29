@@ -1,3 +1,12 @@
+"""
+Pydantic models for the YAML input format: the generator specifications and
+the top-level system configuration.
+
+Validation is cross-field — SystemConfig.validate_dimensions checks every
+omegas vector and every generator against n_modes, and expands the compact
+`iotas` spelling into full exponent vectors of length n_modes.
+"""
+
 from __future__ import annotations
 
 from enum import Enum
@@ -60,13 +69,19 @@ class GeneratorKind(str, Enum):
 
 class GeneratorSpec(BaseModel):
     """
-    Specification of a single generator g_± = i*((a^gamma)† ± a^gamma).
+    Specification of a single basis element of Â_n (see operators.operator):
+
+        g_+^(α,β) = i(a^(β,α) + a^(α,β))
+        g_-^(α,β) = a^(β,α) − a^(α,β)
+
+    Note that g_- carries no factor of i: a^(β,α) − a^(α,β) is already
+    skew-Hermitian, whereas i(a^(β,α) − a^(α,β)) would be Hermitian.
 
     Fields
     ------
     kind  : "+" for g_+, "-" for g_-
-    alpha : creation exponent vector  (a†_0)^alpha_0 ... (a†_n)^alpha_n
-    beta  : annihilation exponent vector  (a_0)^beta_0 ... (a_n)^beta_n
+    alpha : creation exponents, (a†_0)^alpha_0 ... (a†_{n-1})^alpha_{n-1}
+    beta  : annihilation exponents, (a_0)^beta_0 ... (a_{n-1})^beta_{n-1}
     iotas : compact alternative to alpha/beta using mode indices and exponents
     label : human-readable name for the generator (e.g. "G1", "G2", etc.)
     description : optional longer description of the generator

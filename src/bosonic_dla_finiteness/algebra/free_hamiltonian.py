@@ -8,7 +8,10 @@ stored as an immutable coefficient tuple x ∈ ℝ^n.  The relation to the g_+ b
     X = Σ_k (x_k / 2) g_+^{τ_k}.
 
 The algorithm input F = {X^(ℓ) : ℓ ∈ L} is a finite set of free Hamiltonians.
-compute_F_prime returns F' = a basis for span{F} in ℝ^n, extracted via SVD.
+compute_F_prime returns F' = a basis for span{F} in ℝ^n, found by Gaussian
+elimination with pivoting. Note that entries below ZERO_TOL in absolute value
+are treated as exact zeros, so near-dependent inputs are resolved by that
+threshold rather than by a rank-revealing decomposition.
 """
 
 from __future__ import annotations
@@ -35,6 +38,8 @@ class FreeHamiltonian:
         return len(self._x)
 
     def is_zero(self, tol: float = _ZERO_TOL) -> bool:
+        """True if every coefficient vanishes, i.e. X = 0. Such elements carry
+        no information and are dropped by compute_F_prime."""
         return all(abs(x) <= tol for x in self._x)
 
     def __repr__(self) -> str:

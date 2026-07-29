@@ -1,12 +1,13 @@
-from __future__ import annotations
-
 """
 monomial.py
 -----------
 Monomials indexed by gamma = (alpha, beta) in N^{2n}, representing the
 normal-ordered monomial:
 
-    a^gamma = (a†_1)^alpha_1 ... (a†_n)^alpha_n (a_1)^beta_1 ... (a_n)^beta_n
+    a^gamma = (a†_0)^alpha_0 ... (a†_{n-1})^alpha_{n-1}
+              (a_0)^beta_0  ... (a_{n-1})^beta_{n-1}
+
+Mode indices are 0-based throughout.
 
 The multi-degree mdeg(m) := gamma = (alpha, beta) specifies the frequencies
 alpha_j and beta_j of a†_j and a_j respectively.
@@ -17,6 +18,8 @@ Special vectors:
     iota_k : n-vector with 1 at position k  (single-mode index)
     tau_p  : (iota_p, iota_p) in N^{2n}    (number operator a†_p a_p)
 """
+
+from __future__ import annotations
 
 # ── Type aliases ──────────────────────────────────────────────────────────────
 
@@ -72,8 +75,8 @@ def gamma_from_iotas(
 
     Example
     -------
-    >>> gamma_from_iotas(12, alpha_idx=0, alpha_exp=2)
-    ((2, 0, ..., 0), (0, 0, ..., 0))   # (a†_0)^2
+    >>> gamma_from_iotas(3, alpha_idx=0, alpha_exp=2)   # (a†_0)^2
+    ((2, 0, 0), (0, 0, 0))
     """
     zero = tuple([0] * n)
     alpha = (
@@ -104,8 +107,8 @@ def gamma_from_iotas_sum(
 
     Example
     -------
-    >>> gamma_from_iotas_sum(13, beta_indices=[10, 12], beta_exps=[100, 1])
-    # a_10^100 · a_12
+    >>> gamma_from_iotas_sum(4, beta_indices=[1, 3], beta_exps=[2, 1])  # a_1^2 a_3
+    ((0, 0, 0, 0), (0, 2, 0, 1))
     """
     zero = tuple([0] * n)
     a_idx = alpha_indices or []
