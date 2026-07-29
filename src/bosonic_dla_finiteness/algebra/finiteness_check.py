@@ -54,6 +54,23 @@ class FinitenessResult:
     remaining_generators: set[BosonicGenerator] = field(default_factory=set)
 
 
+def _validate_positive_frequencies(F: list[FreeHamiltonian]) -> None:
+    """
+    Ensure that all frequencies are positive.
+
+    The bound is ZERO_TOL rather than exact zero.
+    """
+    for i in range(len(F)):
+        for j in range(len(F[i].coeffs)):
+            if F[i].coeffs[j] <= ZERO_TOL:
+                raise ValueError(
+                    f"F[{i}] has frequency x[{j}]={F[i].coeffs[j]}, which is "
+                    f"not positive (it must exceed ZERO_TOL={ZERO_TOL}). All "
+                    "frequencies must satisfy omega_k > 0; the classification "
+                    "is only valid under that assumption."
+                )
+
+
 def _preprocess_Gperp_G2(
     F_prime: list[FreeHamiltonian],
     decomposed: dict[Subspace, set[BosonicGenerator]],
@@ -220,7 +237,14 @@ def _process_G2F(
     adj: list[list[int]],
 ) -> DimensionResult:
     for gen in decomposed[Subspace.G2_F]:
-        p, q = s_neq(gen.gamma)
+        offdiag = s_neq(gen.gamma)
+        assert len(offdiag) == 2, (
+            f"G^2_F must contain only mode-mixing operators with two "
+            f"off-diagonal modes, got {gen} with S≠={sorted(offdiag)}"
+        )
+        p, q = sorted(
+            offdiag
+        )  # p < q, matching the convention for g^(ι_p,ι_q)
         for j in (p, q):
             if table[Subspace.G2_F][j].bg == BgColor.BLUE:
                 return DimensionResult.INFINITE
@@ -301,6 +325,7 @@ def check_finiteness(
     log.info(
         "Starting finiteness check: n=%d, |generators|=%d", n, len(generators)
     )
+    _validate_positive_frequencies(F)
     log.debug("Computing F' from F")
     F_prime = compute_F_prime(F)
     log.debug("Decomposing generators into subspaces")

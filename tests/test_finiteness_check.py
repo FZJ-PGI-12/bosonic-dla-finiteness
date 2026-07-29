@@ -22,6 +22,7 @@ from bosonic_dla_finiteness.algebra.finiteness_check import (
 )
 from bosonic_dla_finiteness.algebra.free_hamiltonian import FreeHamiltonian
 from bosonic_dla_finiteness.algebra.subspaces import Subspace
+from bosonic_dla_finiteness.constants import ZERO_TOL
 from bosonic_dla_finiteness.io.loader import load_from_yaml
 from bosonic_dla_finiteness.operators.monomial import (
     gamma_from_iotas,
@@ -499,3 +500,61 @@ class TestFinitenessCheck:
             n=12, F=free_hamiltonians, generators=generators
         )
         assert result.dimension == DimensionResult.FINITE
+
+
+class TestPositiveFrequencies:
+    """
+    All frequencies must satisfy omega_k > 0.
+    """
+
+    # (a†_0)^2 — one off-diagonal mode; chi_F = 2*omega_0 vanishes at omega_0=0
+    SQUEEZE_ONE_MODE = ((2, 0), (0, 0))
+    # a†_0 a†_1 — two off-diagonal modes, but not of the form (ι_p, ι_q);
+    # chi_F = omega_0 + omega_1 vanishes at omega = (1, -1)
+    SQUEEZE_TWO_MODE = ((1, 1), (0, 0))
+
+    @pytest.mark.parametrize(
+        "omegas,gamma",
+        [
+            pytest.param([0.0, 1.0], SQUEEZE_ONE_MODE, id="zero-frequency"),
+            pytest.param([1.0, -1.0], SQUEEZE_TWO_MODE, id="opposite-signs"),
+            pytest.param([-1.0, -2.0], SQUEEZE_ONE_MODE, id="all-negative"),
+            # Positive, but at or below ZERO_TOL: chi_F is then judged to
+            # vanish, so the squeezing generators reach G^2_F regardless.
+            pytest.param([1e-15, 1.0], SQUEEZE_ONE_MODE, id="tiny-frequency"),
+            pytest.param(
+                [1e-13, 1e-13], SQUEEZE_TWO_MODE, id="both-tiny-frequencies"
+            ),
+            pytest.param(
+                [ZERO_TOL, 1.0], SQUEEZE_ONE_MODE, id="exactly-at-tolerance"
+            ),
+        ],
+    )
+    def test_non_positive_frequencies_rejected(self, omegas, gamma):
+        gen = BosonicGenerator(kind="+", gamma=gamma)
+        with pytest.raises(ValueError, match="not positive"):
+            check_finiteness(
+                n=2, F=[FreeHamiltonian(omegas)], generators=[gen]
+            )
+
+    def test_positive_frequencies_accepted(self):
+        """The same squeezing generators are fine once omega_k > 0."""
+        gens = [
+            BosonicGenerator(kind="+", gamma=self.SQUEEZE_ONE_MODE),
+            BosonicGenerator(kind="+", gamma=self.SQUEEZE_TWO_MODE),
+        ]
+        result = check_finiteness(
+            n=2, F=[FreeHamiltonian([1.0, 2.0])], generators=gens
+        )
+        assert result.dimension in set(DimensionResult)
+
+    def test_rejection_precedes_classification(self):
+        """
+        A non-positive frequency is rejected even when no generator would
+        exercise the G^2_F path, so the hypothesis is enforced uniformly.
+        """
+        gen = BosonicGenerator(kind="+", gamma=((1, 0), (0, 0)))  # G1
+        with pytest.raises(ValueError, match="not positive"):
+            check_finiteness(
+                n=2, F=[FreeHamiltonian([1.0, 0.0])], generators=[gen]
+            )
