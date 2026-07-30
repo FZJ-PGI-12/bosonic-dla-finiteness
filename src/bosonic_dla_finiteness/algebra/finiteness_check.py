@@ -1,3 +1,32 @@
+"""
+Table-based classification of a bosonic DLA as finite- or infinite-dimensional.
+
+check_finiteness first decomposes the generators into the subspaces G^0, G^1,
+G^2, G^om, G^= and G^⊥. It then partitions G^2 into the generators commuting
+with every free Hamiltonian in F and those that do not, using χ_F(γ) = 0 as
+the test for commuting, which yields G^2_F and G^2_co. Finally it fills a
+bookkeeping table.
+
+The table has one column per mode and seven rows, in the order
+
+    G^0, G^1, G^2_co, G^om, G^=_F, G^2_F, G^⊥_F
+
+Each cell holds a dot, which records data, and a background color, which
+records a constraint. Dots are green or blue; backgrounds are red, orange,
+green or blue. The placement and conflict rules are in the _process_* helpers.
+
+Backgrounds are written once and never overwritten, so the order of the steps
+matters, and it is not the row order above: G^⊥_F first, then G^1/G^2_co/G^om/
+G^=_F, then G^0, and G^2_F last.
+
+All frequencies must be positive; see _validate_positive_frequencies. The
+_process_* helpers return INFINITE on a conflict and None to mean "no conflict,
+continue" — None rather than FINITE, since reaching the end of one step proves
+nothing about the algebra as a whole.
+
+Definitions follow arXiv:2511.06940.
+"""
+
 from __future__ import annotations
 
 import logging
@@ -42,8 +71,8 @@ class DotColor(Enum):
 class Cell:
     """One entry in the classification table: a background color and an optional dot."""
 
-    bg: BgColor = None
-    dot: DotColor = None
+    bg: BgColor | None = None
+    dot: DotColor | None = None
 
 
 @dataclass
@@ -74,7 +103,7 @@ def _validate_positive_frequencies(F: list[FreeHamiltonian]) -> None:
 def _preprocess_Gperp_G2(
     F_prime: list[FreeHamiltonian],
     decomposed: dict[Subspace, set[BosonicGenerator]],
-) -> DimensionResult:
+) -> DimensionResult | None:
     # A generator in G^⊥ with nonzero χ_F(γ) witnesses an infinite-dimensional DLA
     for gen in decomposed[Subspace.Gperp]:
         chiF = compute_chi_F_gamma(F_prime, gen.gamma)
@@ -103,13 +132,13 @@ def _preprocess_Gperp_G2(
         len(decomposed[Subspace.Gperp_F]),
         len(decomposed[Subspace.Geq_F]),
     )
-    return DimensionResult.FINITE
+    return None
 
 
 def _process_GperpF(
     table: dict[Subspace, list[Cell]],
     decomposed: dict[Subspace, set[BosonicGenerator]],
-) -> DimensionResult:
+) -> DimensionResult | None:
     for gen in decomposed[Subspace.Gperp_F]:
         for j in s_neq(gen.gamma):
             if table[Subspace.Gperp_F][j].bg == BgColor.BLUE:
@@ -142,13 +171,13 @@ def _process_GperpF(
                 if table[row][j].bg is None:
                     table[row][j].bg = BgColor.BLUE
 
-    return DimensionResult.FINITE
+    return None
 
 
 def _process_G1_G2core_Gom_GeqF(
     table: dict[Subspace, list[Cell]],
     decomposed: dict[Subspace, set[BosonicGenerator]],
-) -> DimensionResult:
+) -> DimensionResult | None:
     for row in [Subspace.G1, Subspace.G2_core, Subspace.Gom, Subspace.Geq_F]:
         for gen in decomposed[row]:
             for j in s_neq(gen.gamma):
@@ -178,13 +207,13 @@ def _process_G1_G2core_Gom_GeqF(
                 ]:
                     if table[r][j].bg is None:
                         table[r][j].bg = BgColor.BLUE
-    return DimensionResult.FINITE
+    return None
 
 
 def _process_G0(
     table: dict[Subspace, list[Cell]],
     decomposed: dict[Subspace, set[BosonicGenerator]],
-) -> DimensionResult:
+) -> DimensionResult | None:
     for gen in decomposed[Subspace.G0]:
         eq = s_eq(gen.gamma)
         if not eq:
@@ -195,7 +224,7 @@ def _process_G0(
         table[Subspace.G0][j].dot = DotColor.BLUE
         if table[Subspace.G2_F][j].bg is None:
             table[Subspace.G2_F][j].bg = BgColor.GREEN
-    return DimensionResult.FINITE
+    return None
 
 
 def _has_orange_green_conflict(
@@ -235,7 +264,7 @@ def _process_G2F(
     table: dict[Subspace, list[Cell]],
     decomposed: dict[Subspace, set[BosonicGenerator]],
     adj: list[list[int]],
-) -> DimensionResult:
+) -> DimensionResult | None:
     for gen in decomposed[Subspace.G2_F]:
         offdiag = s_neq(gen.gamma)
         assert len(offdiag) == 2, (
@@ -254,7 +283,7 @@ def _process_G2F(
 
     if _has_orange_green_conflict(adj, table):
         return DimensionResult.INFINITE
-    return DimensionResult.FINITE
+    return None
 
 
 def _postprocess(
@@ -331,12 +360,12 @@ def check_finiteness(
     log.debug("Decomposing generators into subspaces")
     decomposed = decompose_generators(generators)
     log.debug("Preprocessing G^⊥ and G^2 generators")
-    intermediate_result = _preprocess_Gperp_G2(F_prime, decomposed)
-    if intermediate_result == DimensionResult.INFINITE:
+    verdict = _preprocess_Gperp_G2(F_prime, decomposed)
+    if verdict == DimensionResult.INFINITE:
         log.info(
             "INFINITE: G^⊥ generator with nonzero χ_F detected in preprocessing"
         )
-        return FinitenessResult(DimensionResult.INFINITE)
+        return FinitenessResult(verdict)
 
     ROWS = [
         Subspace.G0,
@@ -351,29 +380,29 @@ def check_finiteness(
     table = {row: [Cell() for _ in range(n)] for row in ROWS}
 
     log.debug("Processing G^⊥_F generators")
-    intermediate_result = _process_GperpF(table, decomposed)
-    if intermediate_result == DimensionResult.INFINITE:
+    verdict = _process_GperpF(table, decomposed)
+    if verdict == DimensionResult.INFINITE:
         log.info("INFINITE: detected in G^⊥_F step")
-        return FinitenessResult(DimensionResult.INFINITE)
+        return FinitenessResult(verdict)
 
     log.debug("Processing G^1, G^2_core, G^om, G^=_F generators")
-    intermediate_result = _process_G1_G2core_Gom_GeqF(table, decomposed)
-    if intermediate_result == DimensionResult.INFINITE:
+    verdict = _process_G1_G2core_Gom_GeqF(table, decomposed)
+    if verdict == DimensionResult.INFINITE:
         log.info("INFINITE: detected in G^1/G^2_core/G^om/G^=_F step")
-        return FinitenessResult(DimensionResult.INFINITE)
+        return FinitenessResult(verdict)
 
     log.debug("Processing G^0 generators")
-    intermediate_result = _process_G0(table, decomposed)
-    if intermediate_result == DimensionResult.INFINITE:
+    verdict = _process_G0(table, decomposed)
+    if verdict == DimensionResult.INFINITE:
         log.info("INFINITE: detected in G^0 step")
-        return FinitenessResult(DimensionResult.INFINITE)
+        return FinitenessResult(verdict)
 
     log.debug("Processing G^2_F generators")
     adj = [[0] * n for _ in range(n)]
-    intermediate_result = _process_G2F(table, decomposed, adj)
-    if intermediate_result == DimensionResult.INFINITE:
+    verdict = _process_G2F(table, decomposed, adj)
+    if verdict == DimensionResult.INFINITE:
         log.info("INFINITE: detected in G^2_F step")
-        return FinitenessResult(DimensionResult.INFINITE)
+        return FinitenessResult(verdict)
 
     result = _postprocess(adj, table, decomposed)
     log.info("Result: %s", result.dimension.value)
