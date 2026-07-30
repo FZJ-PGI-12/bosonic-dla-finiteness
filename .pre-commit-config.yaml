@@ -6,3 +6,10 @@ repos:
         args: [--fix]
       - id: ruff-format
 
+  # ruff only looks at Python; these cover YAML, Markdown and config files
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
