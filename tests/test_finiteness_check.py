@@ -55,10 +55,8 @@ def _decomposed() -> dict[Subspace, set[BosonicGenerator]]:
 
 
 class TestProcessGperpF:
-    def test_empty_generators_returns_finite(self):
-        assert (
-            _process_GperpF(_table(3), _decomposed()) == DimensionResult.FINITE
-        )
+    def test_empty_generators_returns_none(self):
+        assert _process_GperpF(_table(3), _decomposed()) is None
 
     def test_s_neq_places_green_dot(self):
         # alpha=(2,1,0), beta=(1,0,0) → s_neq={0,1}, s_eq={}  →  Gperp
@@ -68,7 +66,7 @@ class TestProcessGperpF:
         dec[Subspace.Gperp_F] = {
             BosonicGenerator(kind="-", gamma=((2, 1, 0), (1, 0, 0)))
         }
-        assert _process_GperpF(table, dec) == DimensionResult.FINITE
+        assert _process_GperpF(table, dec) is None
         assert table[Subspace.Gperp_F][0].dot == DotColor.GREEN
         assert table[Subspace.Gperp_F][1].dot == DotColor.GREEN
 
@@ -97,7 +95,7 @@ class TestProcessGperpF:
         dec[Subspace.Gperp_F] = {
             BosonicGenerator(kind="-", gamma=((1, 1, 1, 0), (1, 0, 0, 0)))
         }
-        assert _process_GperpF(table, dec) == DimensionResult.FINITE
+        assert _process_GperpF(table, dec) is None
         assert table[Subspace.Gperp_F][0].dot == DotColor.BLUE
 
     def test_s_eq_paints_blue_backgrounds(self):
@@ -164,11 +162,8 @@ class TestProcessGperpF:
 
 
 class TestProcessG1G2coreGomGeqF:
-    def test_empty_generators_returns_finite(self):
-        assert (
-            _process_G1_G2core_Gom_GeqF(_table(3), _decomposed())
-            == DimensionResult.FINITE
-        )
+    def test_empty_generators_returns_none(self):
+        assert _process_G1_G2core_Gom_GeqF(_table(3), _decomposed()) is None
 
     def test_g1_s_neq_places_green_dot_and_backgrounds(self):
         n = 3
@@ -180,9 +175,7 @@ class TestProcessG1G2coreGomGeqF:
                 kind="-", gamma=gamma_from_iotas(n=3, alpha_idx=0)
             )
         }
-        assert (
-            _process_G1_G2core_Gom_GeqF(table, dec) == DimensionResult.FINITE
-        )
+        assert _process_G1_G2core_Gom_GeqF(table, dec) is None
         assert table[Subspace.G1][0].dot == DotColor.GREEN
         for row in [
             Subspace.G1,
@@ -229,9 +222,7 @@ class TestProcessG1G2coreGomGeqF:
         dec[Subspace.Geq_F] = {
             BosonicGenerator(kind="+", gamma=((2, 0, 0), (2, 0, 0)))
         }
-        assert (
-            _process_G1_G2core_Gom_GeqF(table, dec) == DimensionResult.FINITE
-        )
+        assert _process_G1_G2core_Gom_GeqF(table, dec) is None
         assert table[Subspace.Geq_F][0].dot == DotColor.BLUE
         for row in [
             Subspace.G1,
