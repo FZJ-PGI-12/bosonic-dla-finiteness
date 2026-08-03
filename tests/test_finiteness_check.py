@@ -16,7 +16,11 @@ from bosonic_dla_finiteness.algebra.finiteness_check import (
     DimensionResult,
     DotColor,
     _has_orange_green_conflict,
+    _postprocess,
+    _preprocess_Gperp_G2,
+    _process_G0,
     _process_G1_G2core_Gom_GeqF,
+    _process_G2F,
     _process_GperpF,
     check_finiteness,
 )
@@ -549,3 +553,300 @@ class TestPositiveFrequencies:
             check_finiteness(
                 n=2, F=[FreeHamiltonian([1.0, 0.0])], generators=[gen]
             )
+
+
+# ── _preprocess_Gperp_G2 ─────────────────────────────────────────────────────
+
+
+class TestPreprocessGperpG2:
+    F_PRIME = [FreeHamiltonian([1.0, 1.0, 1.0])]
+
+    def test_gperp_with_nonzero_chi_returns_infinite(self):
+        dec = _decomposed()
+        # γ=((2,1,0),(1,0,0)): χ = (2−1) + (1−0) = 2 ≠ 0
+        dec[Subspace.Gperp] = {
+            BosonicGenerator(kind="-", gamma=((2, 1, 0), (1, 0, 0)))
+        }
+        assert (
+            _preprocess_Gperp_G2(self.F_PRIME, dec) == DimensionResult.INFINITE
+        )
+
+    def test_commuting_sets_renamed_and_G2_split(self):
+        dec = _decomposed()
+        # χ = 1 + 1 − 2 = 0 → commutes with F
+        gperp = BosonicGenerator(kind="-", gamma=((1, 1, 0), (0, 0, 2)))
+        # diagonal generators always commute
+        geq = BosonicGenerator(kind="+", gamma=((2, 0, 0), (2, 0, 0)))
+        # a†_0 a_1: χ = 1 − 1 = 0 → G2_F
+        mixing = BosonicGenerator(kind="+", gamma=((1, 0, 0), (0, 1, 0)))
+        # a†_0 a†_1: χ = 1 + 1 = 2 ≠ 0 → G2_core
+        squeeze = BosonicGenerator(kind="+", gamma=((1, 1, 0), (0, 0, 0)))
+        dec[Subspace.Gperp] = {gperp}
+        dec[Subspace.Geq] = {geq}
+        dec[Subspace.G2] = {mixing, squeeze}
+
+        assert _preprocess_Gperp_G2(self.F_PRIME, dec) is None
+        assert dec[Subspace.Gperp_F] == {gperp}
+        assert dec[Subspace.Geq_F] == {geq}
+        assert dec[Subspace.G2_F] == {mixing}
+        assert dec[Subspace.G2_core] == {squeeze}
+
+
+# ── _process_G0 ──────────────────────────────────────────────────────────────
+
+
+class TestProcessG0:
+    NUMBER_OP = ((1, 0, 0), (1, 0, 0))  # a†_0 a_0, s_eq = {0}
+
+    def test_number_operator_places_blue_dot_and_greens_G2F(self):
+        table = _table(3)
+        dec = _decomposed()
+        dec[Subspace.G0] = {BosonicGenerator(kind="+", gamma=self.NUMBER_OP)}
+        assert _process_G0(table, dec) is None
+        assert table[Subspace.G0][0].dot == DotColor.BLUE
+        assert table[Subspace.G2_F][0].bg == BgColor.GREEN
+
+    def test_constant_generator_is_skipped(self):
+        table = _table(3)
+        dec = _decomposed()
+        # γ = 0: the constant 2i, no diagonal index to process
+        dec[Subspace.G0] = {
+            BosonicGenerator(kind="+", gamma=((0, 0, 0), (0, 0, 0)))
+        }
+        assert _process_G0(table, dec) is None
+        assert all(
+            cell.dot is None and cell.bg is None
+            for row in table.values()
+            for cell in row
+        )
+
+    def test_red_background_returns_infinite(self):
+        table = _table(3)
+        table[Subspace.G0][0].bg = BgColor.RED
+        dec = _decomposed()
+        dec[Subspace.G0] = {BosonicGenerator(kind="+", gamma=self.NUMBER_OP)}
+        assert _process_G0(table, dec) == DimensionResult.INFINITE
+
+    def test_existing_G2F_background_not_overwritten(self):
+        table = _table(3)
+        table[Subspace.G2_F][0].bg = BgColor.ORANGE
+        dec = _decomposed()
+        dec[Subspace.G0] = {BosonicGenerator(kind="+", gamma=self.NUMBER_OP)}
+        assert _process_G0(table, dec) is None
+        assert table[Subspace.G2_F][0].bg == BgColor.ORANGE
+
+
+# ── _process_G2F ─────────────────────────────────────────────────────────────
+
+
+class TestProcessG2F:
+    # mode-mixing operators g^(ι_p, ι_q)
+    MIX_01 = ((1, 0, 0), (0, 1, 0))
+    MIX_02 = ((1, 0, 0), (0, 0, 1))
+    MIX_12 = ((0, 1, 0), (0, 0, 1))
+
+    def test_mode_mixing_places_green_dots_and_edge(self):
+        table = _table(3)
+        dec = _decomposed()
+        dec[Subspace.G2_F] = {BosonicGenerator(kind="+", gamma=self.MIX_01)}
+        adj = [[0] * 3 for _ in range(3)]
+        assert _process_G2F(table, dec, adj) is None
+        assert table[Subspace.G2_F][0].dot == DotColor.GREEN
+        assert table[Subspace.G2_F][1].dot == DotColor.GREEN
+        assert adj[0][1] == 1 and adj[1][0] == 1
+
+    def test_blue_background_returns_infinite(self):
+        table = _table(3)
+        table[Subspace.G2_F][0].bg = BgColor.BLUE
+        dec = _decomposed()
+        dec[Subspace.G2_F] = {BosonicGenerator(kind="+", gamma=self.MIX_01)}
+        adj = [[0] * 3 for _ in range(3)]
+        assert _process_G2F(table, dec, adj) == DimensionResult.INFINITE
+
+    def test_orange_green_component_returns_infinite(self):
+        table = _table(3)
+        table[Subspace.G2_F][0].bg = BgColor.ORANGE
+        table[Subspace.G2_F][1].bg = BgColor.GREEN
+        dec = _decomposed()
+        dec[Subspace.G2_F] = {BosonicGenerator(kind="+", gamma=self.MIX_01)}
+        adj = [[0] * 3 for _ in range(3)]
+        assert _process_G2F(table, dec, adj) == DimensionResult.INFINITE
+
+    def test_triangle_component_without_conflict_is_fine(self):
+        # a cycle re-queues visited nodes; without orange there is no conflict
+        table = _table(3)
+        dec = _decomposed()
+        dec[Subspace.G2_F] = {
+            BosonicGenerator(kind="+", gamma=self.MIX_01),
+            BosonicGenerator(kind="+", gamma=self.MIX_02),
+            BosonicGenerator(kind="+", gamma=self.MIX_12),
+        }
+        adj = [[0] * 3 for _ in range(3)]
+        assert _process_G2F(table, dec, adj) is None
+
+    def test_single_offdiagonal_mode_violates_invariant(self):
+        # (a†_0)^2 must never reach G2_F; the helper asserts the invariant
+        table = _table(3)
+        dec = _decomposed()
+        dec[Subspace.G2_F] = {
+            BosonicGenerator(kind="+", gamma=((2, 0, 0), (0, 0, 0)))
+        }
+        adj = [[0] * 3 for _ in range(3)]
+        with pytest.raises(AssertionError, match="mode-mixing"):
+            _process_G2F(table, dec, adj)
+
+
+# ── _postprocess ─────────────────────────────────────────────────────────────
+
+
+class TestPostprocess:
+    def test_empty_table_returns_finite(self):
+        adj = [[0] * 3 for _ in range(3)]
+        result = _postprocess(adj, _table(3), _decomposed())
+        assert result.dimension == DimensionResult.FINITE
+        assert result.remaining_generators == set()
+
+    def test_orange_component_returns_remaining_with_gperpF(self):
+        # orange at mode 0 propagates along edges 0–1, 1–2, so both G2_F
+        # generators are remaining, together with all of Gperp_F
+        table = _table(3)
+        for j in range(3):
+            table[Subspace.G2_F][j].dot = DotColor.GREEN
+        table[Subspace.G2_F][0].bg = BgColor.ORANGE
+
+        gen_01 = BosonicGenerator(kind="+", gamma=((1, 0, 0), (0, 1, 0)))
+        gen_12 = BosonicGenerator(kind="+", gamma=((0, 1, 0), (0, 0, 1)))
+        gperp = BosonicGenerator(kind="-", gamma=((1, 1, 0), (0, 0, 2)))
+        dec = _decomposed()
+        dec[Subspace.G2_F] = {gen_01, gen_12}
+        dec[Subspace.Gperp_F] = {gperp}
+
+        adj = [[0] * 3 for _ in range(3)]
+        adj[0][1] = adj[1][0] = 1
+        adj[1][2] = adj[2][1] = 1
+
+        result = _postprocess(adj, table, dec)
+        assert result.dimension == DimensionResult.REMAINING
+        assert result.remaining_generators == {gen_01, gen_12, gperp}
+
+    def test_gperpF_without_orange_returns_remaining(self):
+        # Step 3 investigates G^⊥_F ∪ T(G^2_F); G^⊥_F needs analysis even
+        # when no G^2_F generator is orange-connected
+        gperp_a = BosonicGenerator(kind="-", gamma=((2, 0), (0, 2)))
+        gperp_b = BosonicGenerator(kind="+", gamma=((2, 1), (1, 2)))
+        dec = _decomposed()
+        dec[Subspace.Gperp_F] = {gperp_a, gperp_b}
+
+        adj = [[0] * 2 for _ in range(2)]
+        result = _postprocess(adj, _table(2), dec)
+        assert result.dimension == DimensionResult.REMAINING
+        assert result.remaining_generators == {gperp_a, gperp_b}
+
+    def test_single_remaining_generator_is_finite(self):
+        # the Lie closure of one generator is its span, hence finite
+        gperp = BosonicGenerator(kind="-", gamma=((2, 0), (0, 2)))
+        dec = _decomposed()
+        dec[Subspace.Gperp_F] = {gperp}
+
+        adj = [[0] * 2 for _ in range(2)]
+        result = _postprocess(adj, _table(2), dec)
+        assert result.dimension == DimensionResult.FINITE
+
+    def test_undotted_orange_does_not_seed(self):
+        # an orange background without a dot has no G2_F edges and must not
+        # start the reachability search
+        table = _table(3)
+        table[Subspace.G2_F][0].bg = BgColor.ORANGE  # undotted
+        table[Subspace.G2_F][1].dot = DotColor.GREEN
+        table[Subspace.G2_F][2].dot = DotColor.GREEN
+
+        gen_12 = BosonicGenerator(kind="+", gamma=((0, 1, 0), (0, 0, 1)))
+        dec = _decomposed()
+        dec[Subspace.G2_F] = {gen_12}
+
+        adj = [[0] * 3 for _ in range(3)]
+        adj[1][2] = adj[2][1] = 1
+
+        result = _postprocess(adj, table, dec)
+        assert result.dimension == DimensionResult.FINITE
+
+
+# ── check_finiteness: G^⊥_F post-processing ──────────────────────────────────
+
+
+class TestGperpFPostprocessing:
+    """Two commuting G^⊥ generators must not be certified finite (Step 3)."""
+
+    # χ = 0 for both with ω = (1, 1); S= = ∅, so no table conflict arises
+    GPERP_A = ((2, 0), (0, 2))
+    GPERP_B = ((2, 1), (1, 2))
+
+    def test_two_gperpF_generators_are_remaining(self):
+        gens = [
+            BosonicGenerator(kind="-", gamma=self.GPERP_A),
+            BosonicGenerator(kind="+", gamma=self.GPERP_B),
+        ]
+        result = check_finiteness(
+            n=2, F=[FreeHamiltonian([1.0, 1.0])], generators=gens
+        )
+        assert result.dimension == DimensionResult.REMAINING
+        assert result.remaining_generators == set(gens)
+
+    def test_single_gperpF_generator_is_finite(self):
+        gen = BosonicGenerator(kind="-", gamma=self.GPERP_A)
+        result = check_finiteness(
+            n=2, F=[FreeHamiltonian([1.0, 1.0])], generators=[gen]
+        )
+        assert result.dimension == DimensionResult.FINITE
+
+
+# ── check_finiteness: INFINITE early-exit paths ──────────────────────────────
+
+
+class TestInfiniteExitPaths:
+    """End-to-end inputs driving each early INFINITE return."""
+
+    def test_infinite_in_preprocessing(self):
+        # Gperp generator with χ_F = 1·1 + 2·1 = 3 ≠ 0
+        gen = BosonicGenerator(kind="-", gamma=((2, 1, 0), (1, 0, 0)))
+        result = check_finiteness(
+            n=3, F=[FreeHamiltonian([1.0, 2.0, 3.0])], generators=[gen]
+        )
+        assert result.dimension == DimensionResult.INFINITE
+
+    def test_infinite_in_GperpF_step(self):
+        # both commute with F (χ = 0), but A acts off-diagonally on mode 0
+        # while B acts diagonally there — a conflict inside the Gperp_F row
+        gen_a = BosonicGenerator(kind="-", gamma=((1, 1, 0), (0, 0, 2)))
+        gen_b = BosonicGenerator(kind="-", gamma=((1, 2, 0), (1, 1, 1)))
+        result = check_finiteness(
+            n=3,
+            F=[FreeHamiltonian([1.0, 1.0, 1.0])],
+            generators=[gen_a, gen_b],
+        )
+        assert result.dimension == DimensionResult.INFINITE
+
+    def test_infinite_in_G2F_step_via_blue_background(self):
+        # the Gperp_F generator acts diagonally on mode 0 (blue background in
+        # the G2_F row); the mode-mixing generator then touches mode 0
+        gperp = BosonicGenerator(kind="-", gamma=((1, 2, 0), (1, 1, 1)))
+        mixing = BosonicGenerator(kind="+", gamma=((1, 0, 0), (0, 1, 0)))
+        result = check_finiteness(
+            n=3,
+            F=[FreeHamiltonian([1.0, 1.0, 1.0])],
+            generators=[gperp, mixing],
+        )
+        assert result.dimension == DimensionResult.INFINITE
+
+    def test_infinite_in_G2F_step_via_orange_green_conflict(self):
+        # Gperp_F paints G2_F orange at modes 0-2; the G1 generator paints
+        # mode 3 green; the mode-mixing generator connects modes 2 and 3
+        gperp = BosonicGenerator(kind="-", gamma=((1, 1, 0, 0), (0, 0, 2, 0)))
+        linear = BosonicGenerator(kind="-", gamma=((0, 0, 0, 1), (0, 0, 0, 0)))
+        mixing = BosonicGenerator(kind="+", gamma=((0, 0, 1, 0), (0, 0, 0, 1)))
+        result = check_finiteness(
+            n=4,
+            F=[FreeHamiltonian([1.0, 1.0, 1.0, 1.0])],
+            generators=[gperp, linear, mixing],
+        )
+        assert result.dimension == DimensionResult.INFINITE

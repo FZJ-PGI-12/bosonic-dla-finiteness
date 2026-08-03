@@ -318,8 +318,13 @@ def _postprocess(
         if any(j in orange_reachable for j in s_neq(gen.gamma))
     }
 
-    if orange_g2f:
-        remaining = orange_g2f | decomposed[Subspace.Gperp_F]
+    # Step 3 requires ⟨G^⊥_F ∪ T(G^2_F)⟩ to be verified finite-dimensional,
+    # where T(G^2_F) = orange_g2f. G^⊥_F belongs to that set even when no
+    # G^2_F generator is orange-connected. The only case resolved here is the
+    # trivial one: the Lie closure of at most one generator is its span and
+    # hence finite-dimensional. Everything else needs further analysis.
+    remaining = orange_g2f | decomposed[Subspace.Gperp_F]
+    if len(remaining) > 1:
         return FinitenessResult(DimensionResult.REMAINING, remaining)
     return FinitenessResult(DimensionResult.FINITE)
 
