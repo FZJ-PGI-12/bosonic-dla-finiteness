@@ -47,7 +47,7 @@ which are indexed by multi-indices $\gamma = (\alpha, \beta) \in \mathbb{N}_{\ge
 
 For unitary quantum dynamics, we restrict $A_n$ to its real skew-hermitian Lie subalgebra $$\hat{A}_n:=\{p\in A_n\,:\,p^\dagger=-p\},$$ because the infinitesimal time-evolution generator $-\mathrm{i}H(t)$ is skew-hermitian. A convenient real basis of $\hat{A}_n$ is formed by the following elements, which we refer to as generators
 
-$$g_+^{(\alpha,\beta)} = \mathrm{i}\bigl(a^{(\beta,\alpha)} + a^{(\alpha,\beta)}\bigr), \qquad g_-^{(\alpha,\beta)} = a^{(\beta,\alpha)} - a^{(\alpha,\beta)}$$
+$$g_+^{(\alpha,\beta)} = \mathrm{i}\bigl(a^{(\beta,\alpha)} + a^{(\alpha,\beta)}\bigr), \qquad g_-^{(\alpha,\beta)} = a^{(\beta,\alpha)} - a^{(\alpha,\beta)}.$$
 
 Each off-diagonal adjoint pair $\{(\alpha,\beta), (\beta,\alpha)\}$ with $\alpha\neq\beta$ contributes two real basis elements, one of type $g_+$ and one of type $g_-$. When $\alpha=\beta$, the element $g_-^{(\alpha,\alpha)}$ vanishes, and only $g_+^{(\alpha,\alpha)}=2\mathrm{i}a^{(\alpha,\alpha)}$ remains. To avoid duplicate representations, we choose the lexicographically larger representative:
 
