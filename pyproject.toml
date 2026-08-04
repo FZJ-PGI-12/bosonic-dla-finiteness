@@ -46,10 +46,11 @@ dev = [
     "pre-commit",         # Git hooks for automated formatting and linting
 ]
 
-# [project.urls] is intentionally absent until the project has moved to its
-# public jugit group. Add Homepage / Repository / Issues / Changelog there once
-# the migration is done — they are the links package indexes and tooling
-# display, and they are only ever what is written here.
+[project.urls]
+Homepage = "https://jugit.fz-juelich.de/pgi-12-external/mathematical-physics/bosonic-dla-finiteness"
+Repository = "https://jugit.fz-juelich.de/pgi-12-external/mathematical-physics/bosonic-dla-finiteness"
+Issues = "https://jugit.fz-juelich.de/pgi-12-external/mathematical-physics/bosonic-dla-finiteness/-/issues"
+Changelog = "https://jugit.fz-juelich.de/pgi-12-external/mathematical-physics/bosonic-dla-finiteness/-/blob/main/CHANGELOG.md"
 
 [project.scripts]
 bosonic-dla = "bosonic_dla_finiteness.__main__:main"

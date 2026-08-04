@@ -1,6 +1,6 @@
-[![pipeline status](https://jugit.fz-juelich.de/pgi-12/projects/mathematical-physics/bosonic-dla-finiteness/badges/main/pipeline.svg)](https://jugit.fz-juelich.de/pgi-12/projects/mathematical-physics/bosonic-dla-finiteness/-/commits/main)
-[![coverage report](https://jugit.fz-juelich.de/pgi-12/projects/mathematical-physics/bosonic-dla-finiteness/badges/main/coverage.svg)](https://jugit.fz-juelich.de/pgi-12/projects/mathematical-physics/bosonic-dla-finiteness/-/commits/main)
-[![Latest Release](https://jugit.fz-juelich.de/pgi-12/projects/mathematical-physics/bosonic-dla-finiteness/-/badges/release.svg)](https://jugit.fz-juelich.de/pgi-12/projects/mathematical-physics/bosonic-dla-finiteness/-/releases)
+[![pipeline status](https://jugit.fz-juelich.de/pgi-12-external/mathematical-physics/bosonic-dla-finiteness/badges/main/pipeline.svg)](https://jugit.fz-juelich.de/pgi-12-external/mathematical-physics/bosonic-dla-finiteness/-/commits/main)
+[![coverage report](https://jugit.fz-juelich.de/pgi-12-external/mathematical-physics/bosonic-dla-finiteness/badges/main/coverage.svg)](https://jugit.fz-juelich.de/pgi-12-external/mathematical-physics/bosonic-dla-finiteness/-/commits/main)
+[![Latest Release](https://jugit.fz-juelich.de/pgi-12-external/mathematical-physics/bosonic-dla-finiteness/-/badges/release.svg)](https://jugit.fz-juelich.de/pgi-12-external/mathematical-physics/bosonic-dla-finiteness/-/releases)
 
 
 # bosonic-dla-finiteness
@@ -32,7 +32,7 @@ Recently, a new framework was proposed for identifying classes of Hamiltonians f
 ## Installation
 
 ```bash
-pip install git+https://jugit.fz-juelich.de/pgi-12/projects/mathematical-physics/bosonic-dla-finiteness.git
+pip install git+https://jugit.fz-juelich.de/pgi-12-external/mathematical-physics/bosonic-dla-finiteness.git
 ```
 
 Or from a clone, for development:
