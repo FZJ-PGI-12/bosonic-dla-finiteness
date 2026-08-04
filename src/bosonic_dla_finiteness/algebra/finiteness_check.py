@@ -24,7 +24,7 @@ _process_* helpers return INFINITE on a conflict and None to mean "no conflict,
 continue" — None rather than FINITE, since reaching the end of one step proves
 nothing about the algebra as a whole.
 
-Definitions follow arXiv:2511.06940.
+Definitions follow arXiv:2511.06940, arXiv:2401.00069.
 """
 
 from __future__ import annotations
