@@ -2,8 +2,11 @@
 Tests for the bosonic_dla_finiteness.operators.monomial module.
 """
 
+import pytest
+
 from bosonic_dla_finiteness.operators.monomial import (
     gamma_degree,
+    gamma_from_iotas_sum,
     iota,
     tau,
 )
@@ -87,3 +90,18 @@ class TestGammaDegree:
         """Test degree of tau monomial."""
         gamma = tau(2, 5)
         assert gamma_degree(gamma) == 2
+
+
+class TestGammaFromIotasSumValidation:
+    """
+    Exponent lists must match their index lists. Raised, not asserted, so the
+    check is not stripped by `python -O`.
+    """
+
+    def test_alpha_exponent_length_mismatch(self):
+        with pytest.raises(ValueError, match="alpha_indices"):
+            gamma_from_iotas_sum(n=3, alpha_indices=[0, 1], alpha_exps=[2])
+
+    def test_beta_exponent_length_mismatch(self):
+        with pytest.raises(ValueError, match="beta_indices"):
+            gamma_from_iotas_sum(n=3, beta_indices=[0], beta_exps=[1, 1])

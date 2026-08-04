@@ -3,7 +3,12 @@ from pathlib import Path
 import pytest
 
 from bosonic_dla_finiteness.io.loader import load_from_yaml
-from bosonic_dla_finiteness.io.models import GeneratorKind, SystemConfig
+from bosonic_dla_finiteness.io.models import (
+    GeneratorKind,
+    GeneratorSpec,
+    IotasSpec,
+    SystemConfig,
+)
 
 
 @pytest.fixture
@@ -135,3 +140,78 @@ class TestLoadFromYAML:
         """Test that FileNotFoundError is raised for missing file."""
         with pytest.raises(FileNotFoundError):
             load_from_yaml("nonexistent_file.yaml")
+
+
+class TestIotasSpecValidation:
+    """Exponent lists, when given, must be parallel to their index lists."""
+
+    def test_alpha_exponent_length_mismatch(self):
+        with pytest.raises(ValueError, match="alpha_exponents"):
+            IotasSpec(alpha_indices=[0, 1], alpha_exponents=[2])
+
+    def test_beta_exponent_length_mismatch(self):
+        with pytest.raises(ValueError, match="beta_exponents"):
+            IotasSpec(beta_indices=[0], beta_exponents=[1, 1])
+
+    def test_omitted_exponents_default_to_one(self):
+        alpha, beta = IotasSpec(
+            alpha_indices=[0, 2], beta_indices=[1]
+        ).to_alpha_beta(3)
+        assert alpha == [1, 0, 1]
+        assert beta == [0, 1, 0]
+
+    def test_repeated_index_accumulates(self):
+        alpha, _ = IotasSpec(alpha_indices=[1, 1]).to_alpha_beta(3)
+        assert alpha == [0, 2, 0]
+
+
+class TestGeneratorSpecValidation:
+    def test_neither_alpha_beta_nor_iotas_rejected(self):
+        with pytest.raises(ValueError, match="Specify either"):
+            GeneratorSpec(kind="+", label="G")
+
+    def test_both_alpha_beta_and_iotas_rejected(self):
+        with pytest.raises(ValueError, match="not both"):
+            GeneratorSpec(
+                kind="+",
+                alpha=[1, 0],
+                beta=[0, 1],
+                iotas=IotasSpec(alpha_indices=[0]),
+                label="G",
+            )
+
+    def test_alpha_beta_length_mismatch_rejected(self):
+        with pytest.raises(ValueError, match="same length"):
+            GeneratorSpec(kind="+", alpha=[1, 0, 0], beta=[0, 1], label="G")
+
+    def test_expand_rejects_wrong_length(self):
+        spec = GeneratorSpec(kind="+", alpha=[1, 0], beta=[0, 1], label="G")
+        with pytest.raises(ValueError, match="expected n=3"):
+            spec.expand(3)
+
+    def test_accessors_require_expand_for_iotas_spec(self):
+        """
+        An iotas-only spec has no exponent vectors until expand(n) runs. The
+        guard names that instead of raising TypeError from len(None).
+        """
+        spec = GeneratorSpec(
+            kind="+", iotas=IotasSpec(alpha_indices=[0]), label="G"
+        )
+        with pytest.raises(ValueError, match="call expand"):
+            _ = spec.gamma
+
+    def test_degree_after_expand(self):
+        spec = GeneratorSpec(
+            kind="+",
+            iotas=IotasSpec(alpha_indices=[0], alpha_exponents=[2]),
+            label="G",
+        )
+        spec.expand(3)
+        assert spec.degree == 2
+        assert spec.gamma == ((2, 0, 0), (0, 0, 0))
+
+
+class TestSystemConfigGeneratorList:
+    def test_empty_generators_rejected(self):
+        with pytest.raises(ValueError, match="must not be empty"):
+            SystemConfig(n_modes=2, omegas=[1.0, 1.0], generators=[])

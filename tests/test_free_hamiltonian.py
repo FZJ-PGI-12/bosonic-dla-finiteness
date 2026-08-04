@@ -3,6 +3,7 @@ import pytest
 
 from bosonic_dla_finiteness.algebra.free_hamiltonian import (
     FreeHamiltonian,
+    compute_chi_freehamiltonian_gamma,
     compute_F_prime,
 )
 from bosonic_dla_finiteness.io.models import SystemConfig
@@ -99,3 +100,45 @@ class TestSystemConfigGetF:
         with pytest.raises(Exception):
             # Two vectors is fine; the second having length 3 is not.
             self._base_config(omegas=[[1.0, 0.0], [0.0, 1.0, 0.0]])
+
+
+class TestFreeHamiltonianDunders:
+    def test_repr_roundtrips_coefficients(self):
+        assert (
+            repr(FreeHamiltonian([1.0, 2.5])) == "FreeHamiltonian([1.0, 2.5])"
+        )
+
+    def test_eq_returns_notimplemented_for_other_type(self):
+        fh = FreeHamiltonian([1.0])
+        assert fh.__eq__("not a free Hamiltonian") is NotImplemented
+        assert fh != "not a free Hamiltonian"
+
+    def test_hash_matches_for_equal_coefficients(self):
+        assert hash(FreeHamiltonian([1.0, 2.0])) == hash(
+            FreeHamiltonian([1.0, 2.0])
+        )
+
+    def test_usable_in_set(self):
+        a = FreeHamiltonian([1.0, 2.0])
+        b = FreeHamiltonian([1.0, 2.0])
+        c = FreeHamiltonian([2.0, 1.0])
+        assert len({a, b, c}) == 2
+
+
+class TestChiGammaModeMismatch:
+    """chi_X(gamma) is only defined when gamma has as many modes as X."""
+
+    def test_gamma_longer_than_hamiltonian_rejected(self):
+        fh = FreeHamiltonian([1.0, 2.0])
+        with pytest.raises(ValueError, match="n=2 modes"):
+            compute_chi_freehamiltonian_gamma(fh, ((1, 0, 0), (0, 0, 0)))
+
+    def test_gamma_shorter_than_hamiltonian_rejected(self):
+        fh = FreeHamiltonian([1.0, 2.0, 3.0])
+        with pytest.raises(ValueError, match="n=3 modes"):
+            compute_chi_freehamiltonian_gamma(fh, ((1,), (0,)))
+
+    def test_mismatched_beta_alone_rejected(self):
+        fh = FreeHamiltonian([1.0, 2.0])
+        with pytest.raises(ValueError, match="β of length 3"):
+            compute_chi_freehamiltonian_gamma(fh, ((1, 0), (0, 0, 0)))

@@ -4,6 +4,7 @@ default:
 stages:
   - lint
   - test
+  - build
 
 variables:
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
@@ -17,9 +18,17 @@ cache:
 lint:
   stage: lint
   script:
-    - pip install ruff
+    # Pinned to match the ruff-format version in .pre-commit-config.yaml, so
+    # that CI and the local hooks cannot disagree about formatting
+    - pip install "ruff==0.15.15"
     - ruff check src/ tests/
     - ruff format --check src/ tests/
+
+typecheck:
+  stage: lint
+  script:
+    - pip install -e ".[dev]"
+    - mypy
 
 test:
   stage: test
@@ -27,3 +36,26 @@ test:
     - pip install -e ".[dev]"
     - pytest --tb=short --cov=src --cov-report=term-missing
   coverage: '/TOTAL.*\s+(\d+%)$/'
+
+build:
+  stage: build
+  script:
+    - pip install build twine
+    # Builds in an isolated env from [build-system].requires, so packaging bugs
+    # that an editable install cannot expose (a file missing from the wheel or
+    # sdist, such as py.typed) fail here instead of reaching users
+    - python -m build
+    # Checks that long_description renders; --strict makes warnings fatal
+    - twine check --strict dist/*
+    # twine never installs the artifact, so import errors need their own check.
+    # The src/ layout means the package is not importable from the repo root,
+    # which guarantees these imports resolve against the installed wheel.
+    - pip install dist/*.whl
+    - python -c "import bosonic_dla_finiteness as p; print(p.__version__)"
+    # A namespace-package regression leaves __file__ unset and ships no py.typed
+    - python -c "import bosonic_dla_finiteness as p; assert p.__file__, 'installed as a namespace package'"
+    - python -c "import importlib.resources as r; assert r.files('bosonic_dla_finiteness').joinpath('py.typed').is_file(), 'py.typed missing from the wheel'"
+    - bosonic-dla examples/example_input.yaml
+  artifacts:
+    paths:
+      - dist/

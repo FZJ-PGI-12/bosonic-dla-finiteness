@@ -1,9 +1,9 @@
 import pytest
 
-from bosonic_dla_finiteness.io.models import GeneratorKind
 from bosonic_dla_finiteness.operators.monomial import tau
 from bosonic_dla_finiteness.operators.operator import (
     BosonicGenerator,
+    GeneratorKind,
     _is_canonical,
 )
 
@@ -42,7 +42,7 @@ class TestGPlus:
         assert g.degree == 2
 
     def test_rejects_non_canonical(self):
-        with pytest.raises(AssertionError):
+        with pytest.raises(ValueError, match=r"g_\+ requires"):
             BosonicGenerator.g_plus(((0, 1), (1, 0)))
 
 
@@ -54,12 +54,28 @@ class TestGMinus:
         assert g.degree == 2
 
     def test_rejects_diagonal(self):
-        with pytest.raises(AssertionError):
+        with pytest.raises(ValueError, match="g_- requires"):
             BosonicGenerator.g_minus(tau(0, 2))
 
     def test_rejects_non_canonical(self):
-        with pytest.raises(AssertionError):
+        with pytest.raises(ValueError, match="g_- requires"):
             BosonicGenerator.g_minus(((0, 1), (1, 0)))
+
+
+class TestRejectsMalformedGamma:
+    """
+    Validation must be a raise, not an assert: `python -O` strips asserts, and
+    a non-canonical index silently accepted there would be classified against
+    preconditions the algorithm does not hold under.
+    """
+
+    def test_rejects_length_mismatch(self):
+        with pytest.raises(ValueError, match="same length"):
+            BosonicGenerator.g_plus(((1, 0, 0), (0, 1)))
+
+    def test_rejects_negative_exponent(self):
+        with pytest.raises(ValueError, match="non-negative"):
+            BosonicGenerator.g_plus(((1, -1), (0, 0)))
 
 
 class TestEqualityAndHash:
@@ -85,3 +101,10 @@ class TestEqualityAndHash:
         g2 = BosonicGenerator.g_plus(tau(0, 2))
         g3 = BosonicGenerator.g_plus(tau(1, 2))
         assert len({g1, g2, g3}) == 2
+
+
+class TestComparisonWithForeignType:
+    def test_eq_returns_notimplemented_for_other_type(self):
+        g = BosonicGenerator.g_plus(tau(0, 2))
+        assert g.__eq__("not a generator") is NotImplemented
+        assert g != "not a generator"

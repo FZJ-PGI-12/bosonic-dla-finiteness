@@ -17,15 +17,21 @@ authors = [
 ]
 keywords = ["quantum", "lie-algebra", "bosonic", "physics", "control-theory"]
 classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Science/Research",
+    "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Scientific/Engineering :: Physics",
+    "Topic :: Scientific/Engineering :: Mathematics",
+    "Typing :: Typed",
 ]
 
 # Core dependencies needed to RUN the program
 dependencies = [
     "pydantic>=2.0",    # Data validation for YAML inputs
     "pyyaml",        # Parsing the input files
-    "sympy",        # Symbolic math for Weyl algebra and commutators
     "numpy",      # Efficient array handling for multi-indices
 ]
 
@@ -34,11 +40,16 @@ dependencies = [
 dev = [
     "pytest",             # For running the test suite in /tests
     "pytest-cov",         # For measuring test coverage
-    "black>=23.0",        # Code formatter
     "mypy>=2.0",          # Static type checking to catch type errors early
-    "ruff>=0.14.0",       # Linter (replaces flake8/isort)
+    "ruff>=0.15.15",      # Linter and formatter (replaces flake8/isort/black)
+    "types-PyYAML",       # Type stubs for pyyaml, needed by mypy
     "pre-commit",         # Git hooks for automated formatting and linting
 ]
+
+# [project.urls] is intentionally absent until the project has moved to its
+# public jugit group. Add Homepage / Repository / Issues / Changelog there once
+# the migration is done — they are the links package indexes and tooling
+# display, and they are only ever what is written here.
 
 [project.scripts]
 bosonic-dla = "bosonic_dla_finiteness.__main__:main"
@@ -50,17 +61,25 @@ package-dir = {"" = "src"}
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.setuptools.package-data]
+# py.typed is not a .py file, so it needs listing to reach the wheel (PEP 561)
+bosonic_dla_finiteness = ["py.typed"]
+
 [tool.setuptools_scm]
 # Presence of this section enables setuptools-scm. The version comes from the
-# latest git tag (e.g. v0.1.0); untagged commits get a .devN+g<hash> suffix.
+# latest git tag (e.g. v1.0.0); untagged commits get a .devN+g<hash> suffix.
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 
 # Configuration for the tools mentioned in dev-dependencies
-[tool.black]
-line-length = 79
-target-version = ['py39']
+[tool.mypy]
+python_version = "3.12"
+# Scoped to src: these annotations are the ones py.typed promises to callers.
+# The test suite is deliberately left unchecked rather than annotated with ~170
+# redundant `-> None` signatures.
+files = ["src"]
+strict = true
 
 [tool.ruff]
 line-length = 79

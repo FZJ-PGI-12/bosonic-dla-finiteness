@@ -9,11 +9,7 @@ omegas vector and every generator against n_modes, and expands the compact
 
 from __future__ import annotations
 
-from enum import Enum
-from typing import TYPE_CHECKING, Annotated
-
-if TYPE_CHECKING:
-    from bosonic_dla_finiteness.operators.operator import BosonicGenerator
+from typing import Annotated, cast
 
 from pydantic import (
     BaseModel,
@@ -21,6 +17,15 @@ from pydantic import (
     field_validator,
     model_validator,
 )
+
+from bosonic_dla_finiteness.operators.operator import (
+    BosonicGenerator,
+    GeneratorKind,
+)
+
+# GeneratorKind lives in operators.operator (the layer that defines the basis
+# elements); it is re-exported here because it is part of the YAML schema.
+__all__ = ["GeneratorKind", "GeneratorSpec", "IotasSpec", "SystemConfig"]
 
 
 class IotasSpec(BaseModel):
@@ -60,11 +65,6 @@ class IotasSpec(BaseModel):
         for idx, exp in zip(self.beta_indices, b_exps):
             beta[idx] += exp
         return alpha, beta
-
-
-class GeneratorKind(str, Enum):
-    plus = "+"
-    minus = "-"
 
 
 class GeneratorSpec(BaseModel):
@@ -108,18 +108,36 @@ class GeneratorSpec(BaseModel):
             raise ValueError(
                 "Specify either 'alpha'/'beta' or 'iotas', not both."
             )
-        if has_explicit and len(self.alpha) != len(self.beta):
-            raise ValueError(
-                f"alpha (len={len(self.alpha)}) and beta (len={len(self.beta)}) "
-                f"must have the same length."
-            )
+        if self.alpha is not None and self.beta is not None:
+            if len(self.alpha) != len(self.beta):
+                raise ValueError(
+                    f"alpha (len={len(self.alpha)}) and beta "
+                    f"(len={len(self.beta)}) must have the same length."
+                )
         return self
+
+    def _exponents(self) -> tuple[list[int], list[int]]:
+        """
+        Return (alpha, beta), both guaranteed non-None.
+
+        check_alpha_beta_or_iotas admits only the explicit and the iotas
+        spelling, and expand() fills alpha/beta in for the latter, so both are
+        set by the time any accessor runs. Raising here keeps that reasoning
+        checkable instead of implicit.
+        """
+        if self.alpha is None or self.beta is None:
+            raise ValueError(
+                "alpha/beta are unset; call expand(n) before accessing the "
+                "exponent vectors of an iotas-specified generator."
+            )
+        return self.alpha, self.beta
 
     def expand(self, n: int) -> None:
         """Expand iotas to alpha/beta of length n and validate dimensions."""
         if self.iotas is not None:
             self.alpha, self.beta = self.iotas.to_alpha_beta(n)
-        for vec, name in [(self.alpha, "alpha"), (self.beta, "beta")]:
+        alpha, beta = self._exponents()
+        for vec, name in [(alpha, "alpha"), (beta, "beta")]:
             if len(vec) != n:
                 raise ValueError(
                     f"{name} has length {len(vec)} but expected n={n}."
@@ -128,17 +146,17 @@ class GeneratorSpec(BaseModel):
     @property
     def gamma(self) -> tuple[tuple[int, ...], tuple[int, ...]]:
         """Return gamma = (alpha, beta) as a GammaIndex tuple."""
-        return (tuple(self.alpha), tuple(self.beta))
+        alpha, beta = self._exponents()
+        return (tuple(alpha), tuple(beta))
 
     @property
     def degree(self) -> int:
         """Total degree |gamma| = sum(alpha) + sum(beta)."""
-        return sum(self.alpha) + sum(self.beta)
+        alpha, beta = self._exponents()
+        return sum(alpha) + sum(beta)
 
     def to_generator(self) -> BosonicGenerator:
         """Convert to a BosonicGenerator (no coefficient)."""
-        from bosonic_dla_finiteness.operators.operator import BosonicGenerator
-
         return BosonicGenerator(self.kind, self.gamma)
 
 
@@ -194,7 +212,9 @@ class SystemConfig(BaseModel):
         """
         if self.omegas and isinstance(self.omegas[0], list):
             return self.omegas
-        return [self.omegas]
+        # Narrowing on omegas[0] tells mypy nothing about the empty case, which
+        # the branch above excludes; the cast records that.
+        return [cast("list[float]", self.omegas)]
 
     @field_validator("generators")
     @classmethod

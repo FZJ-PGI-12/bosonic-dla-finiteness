@@ -110,8 +110,10 @@ def compute_chi_freehamiltonian_gamma(
     """
     alpha, beta = gamma
     n = fh.n
-    assert len(alpha) == n and len(beta) == n, (
-        "gamma must match the number of modes in free Hamiltonian fh"
-    )
+    if len(alpha) != n or len(beta) != n:
+        raise ValueError(
+            f"gamma has α of length {len(alpha)} and β of length {len(beta)}, "
+            f"but the free Hamiltonian has n={n} modes."
+        )
     xi = sum(fh.coeffs[k] * (alpha[k] - beta[k]) for k in range(n))
     return xi

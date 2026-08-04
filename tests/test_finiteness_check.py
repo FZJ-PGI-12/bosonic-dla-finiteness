@@ -555,6 +555,58 @@ class TestPositiveFrequencies:
             )
 
 
+# ── _validate_mode_counts ────────────────────────────────────────────────────
+
+
+class TestValidateModeCounts:
+    """
+    check_finiteness is public API, so a mode-count mismatch must name the
+    offending input rather than surfacing as an IndexError from the table.
+    """
+
+    def test_generator_with_too_many_modes_rejected(self):
+        gen = BosonicGenerator(kind="+", gamma=((0, 0, 0, 0, 1), (0,) * 5))
+        with pytest.raises(ValueError, match="acts on 5 modes"):
+            check_finiteness(
+                n=2, F=[FreeHamiltonian([1.0, 2.0])], generators=[gen]
+            )
+
+    def test_generator_with_too_few_modes_rejected(self):
+        gen = BosonicGenerator(kind="+", gamma=((1, 0), (0, 0)))
+        with pytest.raises(ValueError, match="acts on 2 modes"):
+            check_finiteness(
+                n=3, F=[FreeHamiltonian([1.0, 2.0, 3.0])], generators=[gen]
+            )
+
+    def test_free_hamiltonian_length_mismatch_rejected(self):
+        gen = BosonicGenerator(kind="+", gamma=((1, 0), (0, 0)))
+        with pytest.raises(ValueError, match=r"F\[0\] has 3 coefficients"):
+            check_finiteness(
+                n=2, F=[FreeHamiltonian([1.0, 2.0, 3.0])], generators=[gen]
+            )
+
+    def test_second_free_hamiltonian_reported_by_index(self):
+        gen = BosonicGenerator(kind="+", gamma=((1, 0), (0, 0)))
+        with pytest.raises(ValueError, match=r"F\[1\] has 1 coefficients"):
+            check_finiteness(
+                n=2,
+                F=[FreeHamiltonian([1.0, 2.0]), FreeHamiltonian([1.0])],
+                generators=[gen],
+            )
+
+    @pytest.mark.parametrize("n", [0, -1])
+    def test_non_positive_n_rejected(self, n):
+        with pytest.raises(ValueError, match="n must be at least 1"):
+            check_finiteness(n=n, F=[], generators=[])
+
+    def test_matching_counts_accepted(self):
+        gen = BosonicGenerator(kind="+", gamma=((1, 0), (0, 0)))
+        result = check_finiteness(
+            n=2, F=[FreeHamiltonian([1.0, 2.0])], generators=[gen]
+        )
+        assert result.dimension in set(DimensionResult)
+
+
 # ── _preprocess_Gperp_G2 ─────────────────────────────────────────────────────
 
 
@@ -685,14 +737,14 @@ class TestProcessG2F:
         assert _process_G2F(table, dec, adj) is None
 
     def test_single_offdiagonal_mode_violates_invariant(self):
-        # (a†_0)^2 must never reach G2_F; the helper asserts the invariant
+        # (a†_0)^2 must never reach G2_F; the helper rejects the violation
         table = _table(3)
         dec = _decomposed()
         dec[Subspace.G2_F] = {
             BosonicGenerator(kind="+", gamma=((2, 0, 0), (0, 0, 0)))
         }
         adj = [[0] * 3 for _ in range(3)]
-        with pytest.raises(AssertionError, match="mode-mixing"):
+        with pytest.raises(ValueError, match="mode-mixing"):
             _process_G2F(table, dec, adj)
 
 

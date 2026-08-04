@@ -19,10 +19,14 @@ Backgrounds are written once and never overwritten, so the order of the steps
 matters, and it is not the row order above: G^⊥_F first, then G^1/G^2_co/G^om/
 G^=_F, then G^0, and G^2_F last.
 
-All frequencies must be positive; see _validate_positive_frequencies. The
-_process_* helpers return INFINITE on a conflict and None to mean "no conflict,
-continue" — None rather than FINITE, since reaching the end of one step proves
-nothing about the algebra as a whole.
+Inputs are validated up front: every free Hamiltonian and generator must
+describe exactly n modes (_validate_mode_counts) and all frequencies must be
+positive (_validate_positive_frequencies). Both raise ValueError rather than
+asserting, so the checks survive `python -O`.
+
+The _process_* helpers return INFINITE on a conflict and None to mean "no
+conflict, continue" — None rather than FINITE, since reaching the end of one
+step proves nothing about the algebra as a whole.
 
 Definitions follow arXiv:2511.06940, arXiv:2401.00069.
 """
@@ -81,6 +85,33 @@ class FinitenessResult:
 
     dimension: DimensionResult
     remaining_generators: set[BosonicGenerator] = field(default_factory=set)
+
+
+def _validate_mode_counts(
+    n: int,
+    F: list[FreeHamiltonian],
+    generators: list[BosonicGenerator],
+) -> None:
+    """
+    Ensure every free Hamiltonian and generator describes exactly n modes.
+
+    The YAML front end validates this, but check_finiteness is public API and
+    is documented for direct use. Without the check, a mismatch surfaces as an
+    IndexError from the table lookups instead of naming the offending input.
+    """
+    if n < 1:
+        raise ValueError(f"n must be at least 1, got {n}.")
+    for i, fh in enumerate(F):
+        if fh.n != n:
+            raise ValueError(
+                f"F[{i}] has {fh.n} coefficients but n={n} modes were declared."
+            )
+    for i, gen in enumerate(generators):
+        if gen.n != n:
+            raise ValueError(
+                f"generators[{i}]={gen} acts on {gen.n} modes but n={n} modes "
+                f"were declared."
+            )
 
 
 def _validate_positive_frequencies(F: list[FreeHamiltonian]) -> None:
@@ -267,10 +298,11 @@ def _process_G2F(
 ) -> DimensionResult | None:
     for gen in decomposed[Subspace.G2_F]:
         offdiag = s_neq(gen.gamma)
-        assert len(offdiag) == 2, (
-            f"G^2_F must contain only mode-mixing operators with two "
-            f"off-diagonal modes, got {gen} with S≠={sorted(offdiag)}"
-        )
+        if len(offdiag) != 2:
+            raise ValueError(
+                f"G^2_F must contain only mode-mixing operators with two "
+                f"off-diagonal modes, got {gen} with S≠={sorted(offdiag)}"
+            )
         p, q = sorted(
             offdiag
         )  # p < q, matching the convention for g^(ι_p,ι_q)
@@ -355,10 +387,17 @@ def check_finiteness(
                                   the G2_F generators connected to an orange
                                   background and all G^⊥_F generators that
                                   require further analysis.
+
+    Raises
+    ------
+    ValueError
+        If n < 1, if any free Hamiltonian or generator does not describe
+        exactly n modes, or if any frequency is not positive.
     """
     log.info(
         "Starting finiteness check: n=%d, |generators|=%d", n, len(generators)
     )
+    _validate_mode_counts(n, F, generators)
     _validate_positive_frequencies(F)
     log.debug("Computing F' from F")
     F_prime = compute_F_prime(F)

@@ -115,12 +115,16 @@ def gamma_from_iotas_sum(
     b_idx = beta_indices or []
     a_exps = alpha_exps or [1] * len(a_idx)
     b_exps = beta_exps or [1] * len(b_idx)
-    assert len(a_idx) == len(a_exps), (
-        "alpha_indices and alpha_exps must have the same length"
-    )
-    assert len(b_idx) == len(b_exps), (
-        "beta_indices and beta_exps must have the same length"
-    )
+    if len(a_idx) != len(a_exps):
+        raise ValueError(
+            f"alpha_indices (len={len(a_idx)}) and alpha_exps "
+            f"(len={len(a_exps)}) must have the same length."
+        )
+    if len(b_idx) != len(b_exps):
+        raise ValueError(
+            f"beta_indices (len={len(b_idx)}) and beta_exps "
+            f"(len={len(b_exps)}) must have the same length."
+        )
     alpha = (
         tuple(
             sum(a_exps[k] * iota(i, n)[j] for k, i in enumerate(a_idx))

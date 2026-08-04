@@ -15,6 +15,7 @@ venv/
 
 # Linting
 .ruff_cache/
+.mypy_cache/
 
 # IDE
 .vscode/

@@ -1,10 +1,24 @@
 repos:
+  # Keep this rev in sync with the ruff pin in .gitlab-ci.yml and the floor in
+  # pyproject.toml, so local hooks and CI cannot disagree about formatting
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.11.12
+    rev: v0.15.15
     hooks:
       - id: ruff
         args: [--fix]
       - id: ruff-format
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v2.1.0
+    hooks:
+      - id: mypy
+        # mypy needs the real dependencies to resolve pydantic and numpy types
+        additional_dependencies:
+          - pydantic>=2.0
+          - numpy
+          - types-PyYAML
+        args: [--config-file=pyproject.toml]
+        pass_filenames: false
 
   # ruff only looks at Python; these cover YAML, Markdown and config files
   - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -13,3 +27,4 @@ repos:
       - id: trailing-whitespace
       - id: end-of-file-fixer
       - id: check-yaml
+      - id: check-toml

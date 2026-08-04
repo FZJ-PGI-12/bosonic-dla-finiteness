@@ -10,16 +10,28 @@ a separate quantity: there the values do matter, via chi_F.)
 Basis elements:
     g_+^(α,β) = i(a^(β,α) + a^(α,β))   for (α,β) ≥ (β,α) lexicographically
     g_-^(α,β) = a^(β,α) − a^(α,β)       for (α,β) > (β,α) strictly
+
+The canonicality condition is enforced with a raised ValueError, not an assert:
+gamma is caller-supplied, and the classification's correctness argument assumes
+a canonical index, so the check must not vanish under `python -O`.
 """
 
 from __future__ import annotations
 
-from bosonic_dla_finiteness.io.models import GeneratorKind
+from enum import Enum
+
 from bosonic_dla_finiteness.operators.monomial import (
     GammaIndex,
     MultiIndex,
     gamma_degree,
 )
+
+
+class GeneratorKind(str, Enum):
+    """Which of the two basis families a generator belongs to."""
+
+    plus = "+"
+    minus = "-"
 
 
 def _is_canonical(alpha: MultiIndex, beta: MultiIndex) -> bool:
@@ -46,19 +58,30 @@ class BosonicGenerator:
     def __init__(self, kind: GeneratorKind | str, gamma: GammaIndex) -> None:
         kind = GeneratorKind(kind)
         alpha, beta = gamma
-        assert len(alpha) == len(beta), (
-            "alpha and beta must have the same length"
-        )
-        assert all(a >= 0 for a in alpha) and all(b >= 0 for b in beta)
+        # Raised rather than asserted: gamma is caller-supplied, and the
+        # canonicality of the stored index is a precondition the classification
+        # relies on, so it must survive `python -O`.
+        if len(alpha) != len(beta):
+            raise ValueError(
+                f"alpha (len={len(alpha)}) and beta (len={len(beta)}) must "
+                f"have the same length."
+            )
+        if any(a < 0 for a in alpha) or any(b < 0 for b in beta):
+            raise ValueError(
+                f"exponents must be non-negative: got α={alpha}, β={beta}"
+            )
 
         if kind == GeneratorKind.plus:
-            assert _is_canonical(alpha, beta), (
-                f"g_+ requires (α,β) ≥ (β,α): got α={alpha}, β={beta}"
-            )
+            if not _is_canonical(alpha, beta):
+                raise ValueError(
+                    f"g_+ requires (α,β) ≥ (β,α): got α={alpha}, β={beta}"
+                )
         else:
-            assert (
-                _is_canonical(alpha, beta) and alpha + beta != beta + alpha
-            ), f"g_- requires (α,β) > (β,α) strictly: got α={alpha}, β={beta}"
+            if not _is_canonical(alpha, beta) or alpha + beta == beta + alpha:
+                raise ValueError(
+                    f"g_- requires (α,β) > (β,α) strictly: got α={alpha}, "
+                    f"β={beta}"
+                )
 
         self._kind = kind
         self._gamma = gamma

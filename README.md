@@ -16,10 +16,22 @@ For a bosonic quantum system with $n$ modes, every Hamiltonian can be written as
 ## Installation
 
 ```bash
-pip install -e .
+pip install git+https://jugit.fz-juelich.de/pgi-12/projects/mathematical-physics/bosonic-dla-finiteness.git
 ```
 
-Requires Python ≥ 3.12.
+Or from a clone, for development:
+
+```bash
+pip install -e ".[dev]"
+```
+
+Requires Python ≥ 3.12. The package is fully type-annotated and ships a
+`py.typed` marker, so the annotations are visible to mypy and other type
+checkers in downstream code.
+
+The installed version is available as `bosonic_dla_finiteness.__version__`. It
+is derived from the git tag by setuptools-scm, so an untagged working tree
+reports a `.devN+g<hash>` suffix rather than a release version.
 
 ## Core concepts
 
@@ -157,7 +169,7 @@ gamma_from_iotas_sum(n=5, alpha_indices=[0, 2], beta_indices=[1])
 src/bosonic_dla_finiteness/
 ├── operators/
 │   ├── monomial.py       # GammaIndex type, index constructors, S=/S≠ sets
-│   └── operator.py       # BosonicGenerator (basis elements g_σ^γ)
+│   └── operator.py       # GeneratorKind, BosonicGenerator (basis elements g_σ^γ)
 ├── algebra/
 │   ├── free_hamiltonian.py   # FreeHamiltonian, span reduction, χ_F map
 │   ├── subspaces.py          # Subspace enum, determine_subspace, decompose_generators
@@ -166,8 +178,32 @@ src/bosonic_dla_finiteness/
 │   ├── models.py         # Pydantic models for YAML input
 │   └── loader.py         # YAML loader
 ├── constants.py          # Shared numerical tolerances
+├── py.typed              # PEP 561 marker (annotations are public)
+├── __init__.py           # __version__
 └── __main__.py           # CLI entry point (bosonic-dla)
 ```
+
+Dependencies run one way, `io` → `algebra` → `operators`: the YAML layer builds
+on the algebra, which builds on the operator basis, and never the reverse.
+
+## Limitations
+
+- **Inconclusive cases.** A `REMAINING` verdict means the classification reached
+  Step 3, which requires $\langle G^\perp_F \cup T(G^2_F) \rangle$ to be verified
+  finite-dimensional. Only the trivial case of at most one generator is resolved
+  here; anything larger is returned in `.remaining_generators` for further
+  analysis.
+- **Absolute tolerance.** `ZERO_TOL` is $10^{-12}$ in absolute terms, so it
+  presumes frequencies of order unity. In units where typical $\omega_k$ are very
+  small, the tolerance becomes significant and modes merely close in frequency
+  may be treated as exactly degenerate.
+- **Positive frequencies required.** All $\omega_k > 0$; `check_finiteness`
+  raises `ValueError` otherwise, since the classification is only valid under
+  that hypothesis.
+
+Invalid input raises `ValueError` rather than asserting, so the checks hold under
+`python -O`: this covers non-canonical generator indices, negative exponents, and
+mode counts that disagree with `n`.
 
 ## Development
 
@@ -184,6 +220,27 @@ Run tests:
 pytest
 pytest --cov=src --cov-report=term-missing   # with coverage
 ```
+
+Lint, format and type-check — the same three checks CI runs:
+
+```bash
+ruff check src/ tests/
+ruff format --check src/ tests/
+mypy                       # strict, scoped to src/ via pyproject.toml
+```
+
+### Cutting a release
+
+The version comes from the git tag, so tagging *is* the release:
+
+```bash
+git tag -a v1.0.0 -m "Release 1.0.0"
+git push origin v1.0.0
+```
+
+Update [`CHANGELOG.md`](CHANGELOG.md) before tagging. An untagged tree builds as
+`<next>.devN+g<hash>`; the `+g<hash>` local-version suffix is rejected by PyPI, so
+only tagged builds are publishable.
 
 ## License
 
