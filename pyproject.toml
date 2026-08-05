@@ -13,6 +13,7 @@ license = "MIT"
 license-files = ["LICENSE"]
 authors = [
     {name = "Tim Heib"},
+    {name = "David Edward Bruschi"},
     {name = "Lidia Westphal"},
 ]
 keywords = ["quantum", "lie-algebra", "bosonic", "physics", "control-theory"]

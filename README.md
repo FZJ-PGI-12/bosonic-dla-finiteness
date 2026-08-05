@@ -311,7 +311,8 @@ MIT. See [`LICENSE`](LICENSE). Copyright © 2026 Forschungszentrum Jülich GmbH.
 
 ## Authors
 
-- Tim Heib (PGI-12, Forschungszentrum Jülich GmbH)
-- Lidia Westphal (PGI-12, Forschungszentrum Jülich GmbH)
+- Tim Heib (Institute for Quantum Computing Analytics (PGI-12), Forschungszentrum Jülich)
+- David Edward Bruschi (Institute for Quantum Computing Analytics (PGI-12), Forschungszentrum Jülich)
+- Lidia Westphal (Institute for Quantum Computing Analytics (PGI-12), Forschungszentrum Jülich)
 
 For questions or bug reports, please open an issue.
