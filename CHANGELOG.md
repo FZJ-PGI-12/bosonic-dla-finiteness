@@ -9,6 +9,22 @@ below corresponds to a `vX.Y.Z` tag.
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-08-31
+
+Documentation-only release. No changes to the public API or algorithm.
+
+### Added
+
+- `CITATION.cff` for citing the software, with author ORCIDs and the
+  associated references.
+- README "Citation" section pointing to `CITATION.cff`.
+- README "Acknowledgments" section disclosing that portions of the codebase
+  were developed with the assistance of Claude Code (Anthropic).
+
+### Changed
+
+- Added David Edward Bruschi to the author list.
+
 ## [1.0.0] - 2026-08-04
 
 First stable release. The public API is `check_finiteness`, `FinitenessResult`,
