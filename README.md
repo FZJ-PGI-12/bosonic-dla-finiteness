@@ -305,6 +305,20 @@ only tagged builds are publishable.
 [Bruschi:Xuereb:Zeier]: https://doi.org/10.1088/1751-8121/ad91fc
 [Dixmier]: https://doi.org/10.24033/bsmf.1667
 
+## Citation
+
+If you use this software, please cite it. Author list, ORCIDs, and the
+associated references are maintained in [`CITATION.cff`](CITATION.cff),
+which tools such as [cffconvert](https://github.com/citation-file-format/cffconvert)
+can render as BibTeX or APA.
+
+<!-- TODO: replace with the Zenodo DOI badge once the release is deposited, e.g.
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.XXXXXXX.svg)](https://doi.org/10.5281/zenodo.XXXXXXX)
+-->
+
+To cite a specific released version rather than the repository in general, use
+its Zenodo DOI once available.
+
 ## License
 
 MIT. See [`LICENSE`](LICENSE). Copyright © 2026 Forschungszentrum Jülich GmbH.
@@ -316,3 +330,7 @@ MIT. See [`LICENSE`](LICENSE). Copyright © 2026 Forschungszentrum Jülich GmbH.
 - Lidia Westphal (Institute for Quantum Computing Analytics (PGI-12), Forschungszentrum Jülich)
 
 For questions or bug reports, please open an issue.
+
+## Acknowledgments
+
+Portions of this codebase were developed with the assistance of Claude Code (Sonnet and Opus, Anthropic).
