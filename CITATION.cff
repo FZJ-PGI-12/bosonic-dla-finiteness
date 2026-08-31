@@ -8,8 +8,8 @@ abstract: >-
   polynomial bosonic Hamiltonians. It certifies finite- or infinite-dimensionality where possible
   and otherwise identifies cases requiring further analysis.
 type: software
-version: 1.0.0
-date-released: "2026-08-04"
+version: 1.0.1
+date-released: "2026-08-31"
 license: MIT
 repository-code: "https://jugit.fz-juelich.de/pgi-12-external/mathematical-physics/bosonic-dla-finiteness"
 keywords:
