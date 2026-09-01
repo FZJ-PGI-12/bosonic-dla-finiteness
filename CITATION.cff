@@ -32,7 +32,7 @@ authors:
     given-names: Lidia
     affiliation: "Institute for Quantum Computing Analytics (PGI-12), Forschungszentrum Jülich, Wilhelm-Johnen-Straße, Jülich, 52425, North Rhine-Westphalia, Germany"
     orcid: https://orcid.org/0000-0002-6928-3884
-# doi: "10.5281/zenodo.XXXXXXX"   # add once the Zenodo deposit exists
+doi: "10.5281/zenodo.22210325"
 references:
   - type: article
     authors:

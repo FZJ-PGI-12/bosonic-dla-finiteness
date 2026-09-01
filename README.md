@@ -312,12 +312,12 @@ associated references are maintained in [`CITATION.cff`](CITATION.cff),
 which tools such as [cffconvert](https://github.com/citation-file-format/cffconvert)
 can render as BibTeX or APA.
 
-<!-- TODO: replace with the Zenodo DOI badge once the release is deposited, e.g.
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.XXXXXXX.svg)](https://doi.org/10.5281/zenodo.XXXXXXX)
--->
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22210324.svg)](https://doi.org/10.5281/zenodo.22210324)
 
-To cite a specific released version rather than the repository in general, use
-its Zenodo DOI once available.
+The badge above always resolves to the latest archived release. To cite a
+specific version instead, for example for reproducibility, use that version's
+own DOI, such as [10.5281/zenodo.22210325](https://doi.org/10.5281/zenodo.22210325)
+for v1.0.1.
 
 ## License
 
