@@ -7,6 +7,10 @@
 
 A Python library for deciding whether the dynamical Lie algebra (DLA) associated with a bosonic quantum system is finite-dimensional.
 
+> Development takes place at
+> [jugit.fz-juelich.de](https://jugit.fz-juelich.de/pgi-12-external/mathematical-physics/bosonic-dla-finiteness).
+> Any copy hosted elsewhere is a mirror; please report issues and propose changes there.
+
 Given a set of control Hamiltonians expressed as finite linear combinations of normal-ordered bosonic monomials, the library decomposes their associated skew-hermitian generators into canonical subspaces of the Weyl algebra and applies a table-based classification algorithm. The algorithm either certifies finite-dimensionality, detects infinite-dimensionality, or returns a structured inconclusive result identifying the generators that require further analysis.
 
 ## Background
@@ -280,18 +284,10 @@ ruff format --check src/ tests/
 mypy                       # strict, scoped to src/ via pyproject.toml
 ```
 
-### Cutting a release
+### Releases
 
-The version comes from the git tag, so tagging *is* the release:
-
-```bash
-git tag -a v1.0.0 -m "Release 1.0.0"
-git push origin v1.0.0
-```
-
-Update [`CHANGELOG.md`](CHANGELOG.md) before tagging. An untagged tree builds as
-`<next>.devN+g<hash>`; the `+g<hash>` local-version suffix is rejected by PyPI, so
-only tagged builds are publishable.
+The version is derived from the git tag by setuptools-scm, so tagging *is* the
+release. Update [`CHANGELOG.md`](CHANGELOG.md) before tagging.
 
 ## References
 
@@ -329,7 +325,8 @@ MIT. See [`LICENSE`](LICENSE). Copyright © 2026 Forschungszentrum Jülich GmbH.
 - David Edward Bruschi (Institute for Quantum Computing Analytics (PGI-12), Forschungszentrum Jülich)
 - Lidia Westphal (Institute for Quantum Computing Analytics (PGI-12), Forschungszentrum Jülich)
 
-For questions or bug reports, please open an issue.
+For questions or bug reports, please open an issue on
+[jugit](https://jugit.fz-juelich.de/pgi-12-external/mathematical-physics/bosonic-dla-finiteness/-/issues).
 
 ## Acknowledgments
 
