@@ -61,7 +61,7 @@ $$a^\gamma = (a^\dagger)^\alpha (a)^\beta=(a_1^\dagger)^{\alpha_1}\ldots(a_n^\da
 
 which are indexed by multi-indices $\gamma = (\alpha, \beta) \in \mathbb{N}_{\geq0}^{2n}$. Their total degree is determined by $|\gamma| = \sum_j (\alpha_j + \beta_j)$.
 
-For unitary quantum dynamics, we restrict $A_n$ to its real skew-hermitian Lie subalgebra $$\hat{A}_n:=\{p\in A_n\,:\,p^\dagger=-p\},$$ because the infinitesimal time-evolution generator $-\mathrm{i}H(t)$ is skew-hermitian. A convenient real basis of $\hat{A}_n$ is formed by the following elements, which we refer to as generators
+For unitary quantum dynamics, we restrict $A_n$ to its real skew-hermitian Lie subalgebra $\hat{A}_n:=\{p\in A_n\,:\,p^\dagger=-p\}$, because the infinitesimal time-evolution generator $-\mathrm{i}H(t)$ is skew-hermitian. A convenient real basis of $\hat{A}_n$ is formed by the following elements, which we refer to as generators
 
 $$g_+^{(\alpha,\beta)} = \mathrm{i}\bigl(a^{(\beta,\alpha)} + a^{(\alpha,\beta)}\bigr), \qquad g_-^{(\alpha,\beta)} = a^{(\beta,\alpha)} - a^{(\alpha,\beta)}.$$
 
