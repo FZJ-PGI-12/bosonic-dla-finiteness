@@ -102,7 +102,7 @@ $$-\mathrm{i}H(t)=\sum_{\ell\in\mathcal{L}} w_\ell (t) \underbrace{\sum_{k=1}^n 
 
 The implementation treats the displayed operators as individually available generators. Thus, the corresponding DLA is
 
-$$\mathfrak{g}:={\left\langle\left\{X^{(\ell)}\right\}_{\ell\in \mathcal{L}}\cup\left\{g_{\sigma_q}^{\gamma_q}\right\}_{q\in \mathcal{Q}}\right\rangle}_{\mathrm{Lie}}.$$
+$$\mathfrak{g}:={\langle\{X^{(\ell)}\}_{\ell\in \mathcal{L}}\cup\{g_{\sigma_q}^{\gamma_q}\}_{q\in \mathcal{Q}}\rangle}_{\mathrm{Lie}}.$$
 
 The algorithm returns exactly one of the following three outcomes:
 
